@@ -2,14 +2,32 @@ import { useEffect, useState } from "preact/hooks"
 import { analyzeSingle, fetchUsage, type LandingPageAnalysis } from "../lib/api.ts"
 import { demoUsage, errorMessage, isLoading } from "../lib/state.ts"
 import { AnalysisResults } from "../components/AnalysisResults.tsx"
+import { LoadingSkeleton } from "../components/LoadingSkeleton.tsx"
 
 interface Props {
   preloadedUrl?: string
 }
 
+function validateUrl(s: string): string | null {
+  s = s.trim()
+  if (!s) return "Enter a URL"
+  // Add protocol if missing
+  if (!/^https?:\/\//i.test(s)) s = "https://" + s
+  try {
+    const u = new URL(s)
+    if (!["http:", "https:"].includes(u.protocol)) return "URL must start with http:// or https://"
+    if (!u.hostname.includes(".")) return "Invalid domain"
+    return null
+  } catch {
+    return "Invalid URL format"
+  }
+}
+
 export function HomePage({ preloadedUrl }: Props) {
   const [url, setUrl] = useState(preloadedUrl || "")
   const [analysis, setAnalysis] = useState<LandingPageAnalysis | null>(null)
+  const [validationError, setValidationError] = useState("")
+  const [showValidation, setShowValidation] = useState(false)
 
   useEffect(() => {
     fetchUsage().then((u) => {
@@ -21,11 +39,40 @@ export function HomePage({ preloadedUrl }: Props) {
     if (preloadedUrl) handleAnalyze(preloadedUrl)
   }, [preloadedUrl])
 
+  // Keyboard: Enter to submit when url input focused
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setValidationError("")
+        errorMessage.value = ""
+      }
+    }
+    addEventListener("keydown", handler)
+    return () => removeEventListener("keydown", handler)
+  }, [])
+
   const handleSubmit = async (e: Event) => {
     e.preventDefault()
-    const input = (document.getElementById("urlInput") as HTMLInputElement)?.value.trim()
+    const input = url.trim()
     if (!input) return
+
+    const err = validateUrl(input)
+    if (err) {
+      setValidationError(err)
+      setShowValidation(true)
+      return
+    }
+    setShowValidation(false)
+    setValidationError("")
     await handleAnalyze(input)
+  }
+
+  const handleUrlInput = (value: string) => {
+    setUrl(value)
+    if (showValidation && value.trim()) {
+      const err = validateUrl(value)
+      setValidationError(err || "")
+    }
   }
 
   const handleAnalyze = async (targetUrl: string) => {
@@ -66,16 +113,23 @@ export function HomePage({ preloadedUrl }: Props) {
         {!preloadedUrl && (
           <form id="analyzeForm" onSubmit={handleSubmit} class="max-w-[650px] mx-auto">
             <div class="flex gap-2 max-w-[650px] mx-auto">
-              <input
-                id="urlInput"
-                type="url"
-                value={url}
-                onInput={(e) =>
-                  setUrl((e.target as HTMLInputElement).value)}
-                class="w-full px-4.5 py-3.5 bg-input border border-border rounded-lg text-fg text-base focus:outline-none focus:border-accent"
-                placeholder="Paste a landing page URL..."
-                required
-              />
+              <div class="flex-1">
+                <input
+                  id="urlInput"
+                  type="url"
+                  value={url}
+                  onInput={(e) =>
+                    handleUrlInput((e.target as HTMLInputElement).value)}
+                  class={`w-full px-4.5 py-3.5 bg-input border rounded-lg text-fg text-base focus:outline-none focus:border-accent ${
+                    showValidation && validationError ? "border-red" : "border-border"
+                  }`}
+                  placeholder="Paste a landing page URL..."
+                  required
+                />
+                {showValidation && validationError && (
+                  <p class="text-xs text-red text-left mt-1 ml-1">{validationError}</p>
+                )}
+              </div>
               <button
                 type="submit"
                 disabled={isLoading.value}
@@ -88,16 +142,22 @@ export function HomePage({ preloadedUrl }: Props) {
         )}
       </section>
 
-      {isAnalyzing && (
-        <div class="text-center py-10">
-          <div class="spinner mb-4" />
-          <p>Analyzing page... (2-5s)</p>
-        </div>
-      )}
+      {isAnalyzing && <LoadingSkeleton />}
+
+      {isLoading.value && !preloadedUrl && <LoadingSkeleton />}
 
       {errorMessage.value && (
         <div class="bg-red/10 border border-red rounded-lg p-4 my-4 mx-auto max-w-[650px] text-center">
           <p>{errorMessage.value}</p>
+          {!preloadedUrl && (
+            <button
+              type="button"
+              onClick={() => errorMessage.value = ""}
+              class="mt-2 text-xs underline cursor-pointer bg-transparent border-none text-red"
+            >
+              Dismiss (Esc)
+            </button>
+          )}
         </div>
       )}
 

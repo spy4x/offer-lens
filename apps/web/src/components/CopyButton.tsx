@@ -1,4 +1,4 @@
-import { useState } from "preact/hooks"
+import { showToast } from "../lib/state.ts"
 
 interface CopyButtonProps {
   text: string
@@ -7,16 +7,13 @@ interface CopyButtonProps {
 }
 
 export function CopyButton(props: CopyButtonProps) {
-  const [copied, setCopied] = useState(false)
-
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(props.text)
     } catch {
       fallbackCopy(props.text)
     }
-    setCopied(true)
-    setTimeout(() => setCopied(false), 1500)
+    showToast("Copied!", "success")
   }
 
   return (
@@ -27,7 +24,7 @@ export function CopyButton(props: CopyButtonProps) {
         "bg-transparent border-none cursor-pointer px-1.5 py-0.5 text-sm text-fg-2 rounded hover:bg-input hover:text-fg"}
       title="Copy"
     >
-      {copied ? "Copied!" : (props.label || "📋")}
+      {props.label || "📋"}
     </button>
   )
 }
