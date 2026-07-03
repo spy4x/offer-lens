@@ -1,0 +1,54 @@
+{
+  "name": "@offerlens/monorepo",
+  "version": "1.0.0",
+  "nodeModulesDir": "auto",
+  "imports": {
+    "@offerlens/shared": "./libs/shared/mod.ts",
+    "@offerlens/scraper": "./libs/scraper/mod.ts",
+    "@offerlens/prompts": "./libs/prompts/mod.ts",
+    "@offerlens/analyzer": "./libs/analyzer/mod.ts",
+    "@offerlens/db": "./libs/db/mod.ts",
+    "@offerlens/backend-services": "./backend/services/mod.ts",
+
+    "hono": "jsr:@hono/hono@^4.7",
+    "hono/cors": "jsr:@hono/hono@^4.7/cors",
+    "hono/logger": "jsr:@hono/hono@^4.7/logger",
+    "postgres": "https://deno.land/x/postgresjs@v3.4.5/mod.js",
+    "@modelcontextprotocol/sdk": "npm:@modelcontextprotocol/sdk@^1.13",
+    "@std/expect": "jsr:@std/expect@^1",
+    "@std/testing/bdd": "jsr:@std/testing@^1/bdd",
+
+    "preact": "npm:preact@^10.25",
+    "preact/": "npm:preact@^10.25/",
+    "@preact/signals": "npm:@preact/signals@^1.3",
+    "fresh": "jsr:@fresh/core@^2.0",
+    "$fresh/": "jsr:@fresh/core@^2.0/"
+  },
+  "tasks": {
+    "dev": "deno run -A --env-file=.env --watch=libs/,backend/,main.ts main.ts",
+    "mcp:dev": "deno run -A --env-file=.env apps/mcp-server/main.ts",
+    "db:migrate": "deno run -A --env-file=.env libs/db/migrate.ts",
+    "check": "deno fmt --check && deno lint && deno check main.ts",
+    "fix": "deno fmt && deno lint --fix",
+    "test": "deno test -A --env-file=.env libs/"
+  },
+  "lint": {
+    "rules": {
+      "tags": ["recommended"],
+      "exclude": ["require-await"]
+    }
+  },
+  "fmt": {
+    "useTabs": false,
+    "lineWidth": 100,
+    "indentWidth": 2,
+    "singleQuote": false,
+    "proseWrap": "preserve",
+    "semiColons": false
+  },
+  "compilerOptions": {
+    "lib": ["deno.ns", "ES2022", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "jsxImportSource": "preact"
+  }
+}

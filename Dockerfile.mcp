@@ -1,0 +1,17 @@
+# OfferLens MCP Server — Dockerfile
+FROM denoland/deno:alpine-2.2.0
+
+WORKDIR /app
+
+COPY deno.jsonc ./
+COPY apps/mcp-server/ ./apps/mcp-server/
+COPY libs/ ./libs/
+COPY backend/ ./backend/
+
+RUN deno cache apps/mcp-server/main.ts 2>/dev/null || true
+
+EXPOSE 3000
+
+# Default: HTTP mode on port 3000
+# Override CMD for stdio: ["run", "-A", "apps/mcp-server/main.ts"]
+CMD ["run", "-A", "apps/mcp-server/main.ts", "--http"]

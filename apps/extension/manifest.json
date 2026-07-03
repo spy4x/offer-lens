@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "OfferLens — Media Buyer's Co-Pilot",
+  "version": "1.0.0",
+  "description": "Analyze any landing page in 3 seconds. Get angles, hooks, ad copy, email/SMS angles, and competitive intel.",
+  "permissions": ["activeTab", "storage", "sidePanel"],
+  "host_permissions": ["http://localhost:8000/*", "https://*.deno.dev/*", "https://*.antonshubin.com/*"],
+  "action": {
+    "default_title": "Analyze this page with OfferLens"
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"]
+    }
+  ],
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  }
+}

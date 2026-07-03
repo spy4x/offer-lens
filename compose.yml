@@ -1,0 +1,93 @@
+# OfferLens — Homelab Docker Compose
+# Deployed via: homelab deploy script (symlink from homelab/stacks/offerlens)
+
+services:
+  offerlens:
+    container_name: hl-offerlens
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - PORT=8000
+      - DEMO_OPENAI_API_KEY=${OFFERLENS_DEMO_API_KEY}
+      - OPENAI_API_BASE=${OFFERLENS_API_BASE:-https://api.deepseek.com}
+      - LLM_MODEL=${OFFERLENS_MODEL:-deepseek-chat}
+      - BATCH_CONCURRENCY=${OFFERLENS_BATCH_CONCURRENCY:-5}
+      - DB_HOST=${OFFERLENS_DB_HOST:-offerlens-db}
+      - DB_PORT=5432
+      - DB_NAME=${OFFERLENS_DB_NAME:-offerlens}
+      - DB_USER=${OFFERLENS_DB_USER:-offerlens}
+      - DB_PASS=${OFFERLENS_DB_PASS}
+    networks:
+      - proxy
+      - default
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.services.hl-offerlens.loadbalancer.server.port=8000"
+      - "traefik.http.routers.hl-offerlens.rule=Host(`offer-lens.${DOMAIN}`)"
+      - "traefik.http.routers.hl-offerlens.entrypoints=websecure"
+      - "traefik.http.routers.hl-offerlens.tls=true"
+      - "traefik.http.routers.hl-offerlens.tls.certresolver=myresolver"
+    depends_on:
+      offerlens-db:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
+    restart: unless-stopped
+
+  offerlens-mcp:
+    container_name: hl-offerlens-mcp
+    build:
+      context: .
+      dockerfile: Dockerfile.mcp
+    environment:
+      - OFFERLENS_BACKEND_URL=http://hl-offerlens:8000
+      - OFFERLENS_API_KEY=${OFFERLENS_DEMO_API_KEY}
+      - OFFERLENS_SESSION_ID=${OFFERLENS_MCP_SESSION_ID:-offerlens-mcp}
+      - MCP_HTTP_PORT=3000
+    networks:
+      - proxy
+      - default
+    # Internal MCP service — NOT exposed via Traefik
+    healthcheck:
+      test: ["CMD-SHELL", "deno eval 'const r = await fetch(\"http://localhost:3000/health\"); Deno.exit(r.ok ? 0 : 1)' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.2"
+    restart: unless-stopped
+
+  offerlens-db:
+    container_name: hl-offerlens-db
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_DB=${OFFERLENS_DB_NAME:-offerlens}
+      - POSTGRES_USER=${OFFERLENS_DB_USER:-offerlens}
+      - POSTGRES_PASSWORD=${OFFERLENS_DB_PASS}
+    volumes:
+      - ${VOLUMES_PATH}/offerlens/db:/var/lib/postgresql/data:z
+    networks:
+      - default
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${OFFERLENS_DB_USER:-offerlens}"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.3"
+    restart: unless-stopped
+
+networks:
+  proxy:
+    external: true
