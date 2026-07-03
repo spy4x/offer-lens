@@ -2,6 +2,8 @@ import { useEffect, useState } from "preact/hooks"
 import { Header } from "./components/Header.tsx"
 import { HomePage } from "./pages/HomePage.tsx"
 import { BatchPage } from "./pages/BatchPage.tsx"
+import { ToastContainer } from "./components/Toast.tsx"
+import { theme } from "./lib/state.ts"
 
 type Page = "home" | "batch"
 
@@ -14,6 +16,11 @@ function getPageFromPath(): Page {
 export function App() {
   const [page, setPage] = useState<Page>(getPageFromPath)
   const [preloadedUrl, setPreloadedUrl] = useState("")
+
+  // Apply theme on mount
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme.value)
+  }, [])
 
   useEffect(() => {
     const handlePop = () => {
@@ -43,6 +50,8 @@ export function App() {
       <footer class="mt-10 pt-5 border-t border-border text-center text-xs text-fg-3">
         <span>OfferLens v1.0 &middot; It's Today Media</span>
       </footer>
+
+      <ToastContainer />
     </div>
   )
 }

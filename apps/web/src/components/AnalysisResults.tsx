@@ -6,7 +6,7 @@ import type {
   TrustSignal,
 } from "../lib/api.ts"
 import { CopyButton } from "./CopyButton.tsx"
-import { useState } from "preact/hooks"
+import { type ComponentChildren, useState } from "preact/hooks"
 
 interface Props {
   analysis: LandingPageAnalysis
@@ -33,12 +33,37 @@ export function AnalysisResults({ analysis }: Props) {
   )
 }
 
-function PrimaryAngle({ angle }: { angle: LandingPageAnalysis["primaryAngle"] }) {
+// Collapsible section wrapper
+function CollapsibleSection({
+  title,
+  defaultOpen = true,
+  children,
+}: {
+  title: string
+  defaultOpen?: boolean
+  children: ComponentChildren
+}) {
+  const [open, setOpen] = useState(defaultOpen)
   return (
     <section class="mb-6">
-      <h2 class="text-lg mb-2.5 text-accent flex items-center justify-between">
-        🎯 PRIMARY ANGLE
-      </h2>
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        class="w-full flex items-center justify-between text-left cursor-pointer bg-transparent border-none p-0"
+      >
+        <h2 class="text-lg text-accent flex items-center gap-2">
+          <span class={`collapse-arrow ${open ? "open" : ""} inline-block`}>▶</span>
+          {title}
+        </h2>
+      </button>
+      {open && <div class="mt-2.5">{children}</div>}
+    </section>
+  )
+}
+
+function PrimaryAngle({ angle }: { angle: LandingPageAnalysis["primaryAngle"] }) {
+  return (
+    <CollapsibleSection title="🎯 PRIMARY ANGLE">
       <div class="bg-card border border-border rounded-lg px-4.5 py-3.5">
         <div class="flex items-center gap-2.5 mb-2">
           <span class="bg-accent text-white px-2.5 py-0.5 rounded text-xs font-semibold uppercase">
@@ -50,22 +75,19 @@ function PrimaryAngle({ angle }: { angle: LandingPageAnalysis["primaryAngle"] })
         </div>
         <p class="text-xs text-fg-3">{esc(angle.explanation || "")}</p>
       </div>
-    </section>
+    </CollapsibleSection>
   )
 }
 
 function HooksList({ hooks }: { hooks: string[] }) {
   if (!hooks?.length) return null
   return (
-    <section class="mb-6">
-      <h2 class="text-lg mb-2.5 text-accent flex items-center justify-between">
-        📋 HOOK IDEAS
-        <CopyButton
-          text={hooks.join("\n")}
-          label="Copy All"
-          class="text-xs px-2.5 py-1 bg-accent text-white rounded-lg font-medium inline-flex items-center gap-1.5 hover:bg-accent-hover border-none cursor-pointer"
-        />
-      </h2>
+    <CollapsibleSection title="📋 HOOK IDEAS">
+      <CopyButton
+        text={hooks.join("\n")}
+        label="Copy All"
+        class="mb-2 text-xs px-2.5 py-1 bg-accent text-white rounded-lg font-medium inline-flex items-center gap-1.5 hover:bg-accent-hover border-none cursor-pointer"
+      />
       <ol class="list-decimal pl-6">
         {hooks.map((h, i) => (
           <li key={i} class="flex justify-between items-start py-1.5 gap-2.5 text-sm">
@@ -74,16 +96,13 @@ function HooksList({ hooks }: { hooks: string[] }) {
           </li>
         ))}
       </ol>
-    </section>
+    </CollapsibleSection>
   )
 }
 
 function TargetAudience({ audience }: { audience: LandingPageAnalysis["targetAudience"] }) {
   return (
-    <section class="mb-6">
-      <h2 class="text-lg mb-2.5 text-accent flex items-center justify-between">
-        👤 TARGET AUDIENCE
-      </h2>
+    <CollapsibleSection title="👤 TARGET AUDIENCE">
       <div class="bg-card border border-border rounded-lg px-4.5 py-3.5">
         <p>
           <strong>Demographics:</strong> {esc(audience.demographics || "")}
@@ -101,7 +120,7 @@ function TargetAudience({ audience }: { audience: LandingPageAnalysis["targetAud
           <strong>Notes:</strong> {esc(audience.confidenceNotes || "")}
         </p>
       </div>
-    </section>
+    </CollapsibleSection>
   )
 }
 
@@ -109,10 +128,7 @@ function AdCopySection({ adCopy }: { adCopy: LandingPageAnalysis["adCopy"] }) {
   const [tab, setTab] = useState<"facebook" | "google" | "native">("facebook")
 
   return (
-    <section class="mb-6">
-      <h2 class="text-lg mb-2.5 text-accent flex items-center justify-between">
-        📑 AD COPY
-      </h2>
+    <CollapsibleSection title="📑 AD COPY">
       <div class="flex gap-0.5 mb-2.5">
         {(["facebook", "google", "native"] as const).map((t) => (
           <button
@@ -132,7 +148,7 @@ function AdCopySection({ adCopy }: { adCopy: LandingPageAnalysis["adCopy"] }) {
       {tab === "facebook" && <AdVariants variants={adCopy.facebook} />}
       {tab === "google" && <AdVariants variants={adCopy.google} />}
       {tab === "native" && <NativeVariants variants={adCopy.native} />}
-    </section>
+    </CollapsibleSection>
   )
 }
 
@@ -190,10 +206,7 @@ function NativeVariants({ variants }: { variants: NativeAdVariant[] }) {
 
 function EmailSmsSection({ email }: { email: LandingPageAnalysis["emailAngle"] }) {
   return (
-    <section class="mb-6">
-      <h2 class="text-lg mb-2.5 text-accent flex items-center justify-between">
-        📧 EMAIL & SMS ANGLES
-      </h2>
+    <CollapsibleSection title="📧 EMAIL & SMS ANGLES">
       <div class="bg-card border border-border rounded-lg px-4.5 py-3.5">
         <h4>
           Subject Lines{" "}
@@ -220,16 +233,13 @@ function EmailSmsSection({ email }: { email: LandingPageAnalysis["emailAngle"] }
           {esc(email.smsAngle || "")}
         </p>
       </div>
-    </section>
+    </CollapsibleSection>
   )
 }
 
 function TrustSignalsSection({ signals }: { signals: TrustSignal[] }) {
   return (
-    <section class="mb-6">
-      <h2 class="text-lg mb-2.5 text-accent flex items-center justify-between">
-        🕊 TRUST SIGNALS
-      </h2>
+    <CollapsibleSection title="🕊 TRUST SIGNALS">
       <div class="bg-card border border-border rounded-lg px-4.5 py-3.5">
         {signals.map((ts, i) => {
           const icon = ts.present ? "✅" : "❌"
@@ -246,16 +256,13 @@ function TrustSignalsSection({ signals }: { signals: TrustSignal[] }) {
           )
         })}
       </div>
-    </section>
+    </CollapsibleSection>
   )
 }
 
 function BlockersSection({ blockers }: { blockers: Blocker[] }) {
   return (
-    <section class="mb-6">
-      <h2 class="text-lg mb-2.5 text-accent flex items-center justify-between">
-        ⚠ CONVERSION BLOCKERS
-      </h2>
+    <CollapsibleSection title="⚠ CONVERSION BLOCKERS">
       <div class="bg-card border border-border rounded-lg px-4.5 py-3.5">
         {blockers.map((b, i) => {
           const dot = b.severity === "high" ? "🔴" : b.severity === "medium" ? "🟡" : "🟢"
@@ -269,29 +276,23 @@ function BlockersSection({ blockers }: { blockers: Blocker[] }) {
           )
         })}
       </div>
-    </section>
+    </CollapsibleSection>
   )
 }
 
 function AbTestsSection({ ideas }: { ideas: string[] }) {
   return (
-    <section class="mb-6">
-      <h2 class="text-lg mb-2.5 text-accent flex items-center justify-between">
-        💡 A/B TEST IDEAS
-      </h2>
+    <CollapsibleSection title="💡 A/B TEST IDEAS">
       <ol class="bg-card border border-border rounded-lg px-4.5 py-3.5">
         {ideas.map((i, idx) => <li key={idx}>{esc(i)}</li>)}
       </ol>
-    </section>
+    </CollapsibleSection>
   )
 }
 
 function CompetitiveIntel({ intel }: { intel: LandingPageAnalysis["competitiveIntel"] }) {
   return (
-    <section class="mb-6">
-      <h2 class="text-lg mb-2.5 text-accent flex items-center justify-between">
-        🕺 COMPETITIVE INTEL
-      </h2>
+    <CollapsibleSection title="🕺 COMPETITIVE INTEL">
       <div class="bg-card border border-border rounded-lg px-4.5 py-3.5">
         <p>
           <strong>Likely Traffic:</strong> {esc((intel.likelyTrafficSources || []).join(", "))}
@@ -306,20 +307,17 @@ function CompetitiveIntel({ intel }: { intel: LandingPageAnalysis["competitiveIn
           <strong>Competitors Testing:</strong> {esc(intel.whatCompetitorsAreLikelyTesting || "")}
         </p>
       </div>
-    </section>
+    </CollapsibleSection>
   )
 }
 
 function CompetitorAnglesSection({ angles }: { angles: string[] }) {
   return (
-    <section class="mb-6">
-      <h2 class="text-lg mb-2.5 text-accent flex items-center justify-between">
-        ⚔ COMPETITOR COUNTER-ANGLES
-      </h2>
+    <CollapsibleSection title="⚔ COMPETITOR COUNTER-ANGLES">
       <ul class="bg-card border border-border rounded-lg px-4.5 py-3.5">
         {angles.map((a, i) => <li key={i}>{esc(a)}</li>)}
       </ul>
-    </section>
+    </CollapsibleSection>
   )
 }
 
