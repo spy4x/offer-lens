@@ -6,12 +6,40 @@ export const demoUsage = signal<DemoUsage | null>(null)
 export const isLoading = signal(false)
 export const errorMessage = signal("")
 
-// Theme state: "dark" | "light"
+// Auth state
+export interface UserInfo {
+  id: string
+  email?: string
+  isAnonymous: boolean
+  usageCount: number
+  createdAt: string
+}
+
+export const authToken = signal<string | null>(localStorage.getItem("ol_token"))
+export const currentUser = signal<UserInfo | null>(null)
+
+// Subscribe to token changes
+authToken.subscribe((t) => {
+  if (t) localStorage.setItem("ol_token", t)
+  else localStorage.removeItem("ol_token")
+})
+
+export function setAuth(token: string | null, user: UserInfo | null) {
+  authToken.value = token
+  currentUser.value = user
+}
+
+export function logout() {
+  authToken.value = null
+  currentUser.value = null
+  localStorage.removeItem("ol_token")
+}
+
+// Theme state
 export const theme = signal<"dark" | "light">(
   (localStorage.getItem("ol_theme") as "dark" | "light") || "dark",
 )
 
-// Subscribe to theme changes — apply to <html>
 theme.subscribe((t) => {
   document.documentElement.setAttribute("data-theme", t)
   localStorage.setItem("ol_theme", t)

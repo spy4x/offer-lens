@@ -1,9 +1,17 @@
 import { DemoCounter } from "./DemoCounter.tsx"
-import { theme, toggleTheme } from "../lib/state.ts"
+import { currentUser, logout, theme, toggleTheme } from "../lib/state.ts"
 import { useState } from "preact/hooks"
 
 export function Header() {
   const [menuOpen, setMenuOpen] = useState(false)
+  const user = currentUser.value
+
+  const navTo = (path: string) => (e: Event) => {
+    e.preventDefault()
+    setMenuOpen(false)
+    history.pushState(null, "", path)
+    dispatchEvent(new PopStateEvent("popstate"))
+  }
 
   return (
     <header class="flex justify-between items-center pb-4 border-b border-border mb-6">
@@ -37,10 +45,44 @@ export function Header() {
         <DemoCounter />
         <a
           href="/batch"
+          onClick={navTo("/batch")}
           class="text-xs px-2.5 py-1 bg-accent text-white rounded-lg font-medium inline-flex items-center gap-1.5 hover:bg-accent-hover no-underline"
         >
           📦 Batch
         </a>
+
+        {user
+          ? (
+            <>
+              <a
+                href="/history"
+                onClick={navTo("/history")}
+                class="text-xs px-2.5 py-1 bg-input border border-border rounded-lg font-medium hover:bg-border no-underline text-fg-2"
+              >
+                📋 History
+              </a>
+              <button
+                type="button"
+                onClick={() => {
+                  logout()
+                  navTo("/")()
+                }}
+                class="text-xs px-2.5 py-1 bg-input border border-border rounded-lg font-medium hover:bg-border cursor-pointer text-fg-2"
+              >
+                Logout
+              </button>
+            </>
+          )
+          : (
+            <a
+              href="/login"
+              onClick={navTo("/login")}
+              class="text-xs px-2.5 py-1 bg-input border border-border rounded-lg font-medium hover:bg-border no-underline text-fg-2"
+            >
+              Login
+            </a>
+          )}
+
         <button
           type="button"
           onClick={toggleTheme}
@@ -58,10 +100,43 @@ export function Header() {
           <DemoCounter />
           <a
             href="/batch"
+            onClick={navTo("/batch")}
             class="text-xs px-2.5 py-1 bg-accent text-white rounded-lg font-medium inline-flex items-center gap-1.5 hover:bg-accent-hover no-underline"
           >
             📦 Batch
           </a>
+          {user
+            ? (
+              <>
+                <a
+                  href="/history"
+                  onClick={navTo("/history")}
+                  class="text-xs px-2.5 py-1 bg-input border border-border rounded-lg no-underline text-fg-2"
+                >
+                  📋 History
+                </a>
+                <button
+                  type="button"
+                  onClick={() => {
+                    logout()
+                    setMenuOpen(false)
+                    navTo("/")()
+                  }}
+                  class="text-xs px-2.5 py-1 bg-input border border-border rounded-lg cursor-pointer text-fg-2"
+                >
+                  Logout
+                </button>
+              </>
+            )
+            : (
+              <a
+                href="/login"
+                onClick={navTo("/login")}
+                class="text-xs px-2.5 py-1 bg-input border border-border rounded-lg no-underline text-fg-2"
+              >
+                Login
+              </a>
+            )}
           <button
             type="button"
             onClick={toggleTheme}

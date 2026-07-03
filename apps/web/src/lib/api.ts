@@ -1,6 +1,8 @@
 // OfferLens API client
 // Backend runs on same origin in production, proxied in dev
 
+import { authToken } from "./state.ts"
+
 interface DemoUsage {
   used: number
   limit: number
@@ -99,9 +101,16 @@ function getApiKey(): string {
 }
 
 async function apiFetch<T>(path: string, body?: unknown): Promise<T> {
-  const headers: Record<string, string> = {
-    "X-Session-Id": getSessionId(),
+  const headers: Record<string, string> = {}
+
+  // Auth: prefer Bearer token, fall back to session
+  const token = authToken.value
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`
+  } else {
+    headers["X-Session-Id"] = getSessionId()
   }
+
   const opts: RequestInit = { headers }
   if (body) {
     headers["Content-Type"] = "application/json"
@@ -115,6 +124,8 @@ async function apiFetch<T>(path: string, body?: unknown): Promise<T> {
   }
   return res.json()
 }
+
+// --- Public API ---
 
 export function fetchUsage(): Promise<DemoUsage> {
   return apiFetch<DemoUsage>("/api/usage")
@@ -132,4 +143,50 @@ export function analyzeBatch(urls: string[]): Promise<BatchResponse> {
   const apiKey = getApiKey()
   if (apiKey) body.apiKey = apiKey
   return apiFetch<BatchResponse>("/api/batch", body)
+}
+
+// --- Auth API ---
+
+export interface AuthUser {
+  id: string
+  email?: string
+  isAnonymous: boolean
+  usageCount: number
+  createdAt: string
+}
+
+export async function register(
+  email: string,
+  password: string,
+): Promise<{ token: string; user: AuthUser }> {
+  return apiFetch("/api/auth/register", { email, password })
+}
+
+export async function login(
+  email: string,
+  password: string,
+): Promise<{ token: string; user: AuthUser }> {
+  return apiFetch("/api/auth/login", { email, password })
+}
+
+export async function fetchMe(): Promise<{ user: AuthUser }> {
+  return apiFetch("/api/auth/me")
+}
+
+export async function attachPassword(
+  email: string,
+  password: string,
+): Promise<{ success: boolean }> {
+  return apiFetch("/api/auth/attach", { email, password })
+}
+
+export interface AnalysisSummary {
+  id: number
+  url: string
+  createdAt: string
+  primaryAngle: string | null
+}
+
+export async function fetchHistory(): Promise<{ analyses: AnalysisSummary[] }> {
+  return apiFetch("/api/analyses")
 }

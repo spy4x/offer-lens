@@ -5,12 +5,20 @@ import { MAX_BATCH_URLS } from "@offerlens/shared"
 import { analyzeLandingPage } from "@offerlens/analyzer"
 import { Config } from "@offerlens/backend-services"
 import { checkDemoUsage, getDemoUsage, recordDemoUsage } from "../services/demo-usage.ts"
+import { authenticateRequest } from "../services/auth.ts"
+
+function getSessionId(c: { req: { header: (name: string) => string | undefined } }): string | null {
+  return c.req.header("X-Session-Id") || null
+}
 
 export const batchRoute = new Hono()
   .post("/", async (c) => {
-    const sessionId = c.req.header("X-Session-Id")
-    if (!sessionId) {
-      return c.json({ error: "X-Session-Id header is required" }, 400)
+    const auth = await authenticateRequest(c)
+    const userId = auth.user?.sub
+    const sessionId = getSessionId(c)
+
+    if (!userId && !sessionId) {
+      return c.json({ error: "Authorization header or X-Session-Id header required" }, 400)
     }
 
     let body: BatchRequest
@@ -47,8 +55,8 @@ export const batchRoute = new Hono()
       )
     }
 
-    // Check demo usage — count all URLs against limit
-    const { canProceed, usage } = await checkDemoUsage(sessionId, body.apiKey)
+    // Check demo usage
+    const { canProceed, usage } = await checkDemoUsage(sessionId || "", body.apiKey, userId)
     if (!canProceed && !body.apiKey) {
       if (usage.limit === 0) {
         return c.json(
@@ -62,13 +70,13 @@ export const batchRoute = new Hono()
       )
     }
 
-    // Calculate how many we can process with demo key
+    // Calculate how many we can process
     const urlsToProcess = body.apiKey ? body.urls : body.urls.slice(0, usage.remaining)
 
     const effectiveApiKey = body.apiKey || Config.demoApiKey
     const concurrency = Config.batchConcurrency
 
-    // Process in batches of concurrency
+    // Process in batches
     const results: BatchResult[] = []
     const errors: Array<{ url: string; error: string }> = []
 
@@ -97,17 +105,43 @@ export const batchRoute = new Hono()
       }
     }
 
-    // Add skipped URLs (if demo limit exceeded)
+    // Add skipped URLs
     for (const url of body.urls.slice(urlsToProcess.length)) {
       errors.push({ url, error: "Skipped: demo limit reached" })
     }
 
     // Record usage (only for demo key)
     if (!body.apiKey) {
-      await recordDemoUsage(sessionId, "batch", urlsToProcess.length)
+      await recordDemoUsage(sessionId || "", "batch", urlsToProcess.length, userId)
     }
 
-    const demoUsage = body.apiKey ? undefined : await getDemoUsage(sessionId)
+    // Store analyses in DB if user is authenticated
+    if (userId) {
+      try {
+        const { default: postgres } = await import("postgres")
+        const sql = postgres({
+          host: Deno.env.get("DB_HOST") || "localhost",
+          port: parseInt(Deno.env.get("DB_PORT") || "5432"),
+          database: Deno.env.get("DB_NAME") || "offerlens",
+          user: Deno.env.get("DB_USER") || "offerlens",
+          password: Deno.env.get("DB_PASS") || "offerlens",
+          max: 2,
+        })
+        for (const r of results) {
+          if (r.analysis) {
+            await sql`
+              INSERT INTO analyses (session_id, user_id, url, analysis)
+              VALUES (${sessionId || ""}, ${userId}, ${r.url}, ${JSON.stringify(r.analysis)})
+            `
+          }
+        }
+        await sql.end()
+      } catch {
+        // Storage failure is non-fatal
+      }
+    }
+
+    const demoUsage = body.apiKey ? undefined : await getDemoUsage(sessionId || "", userId)
 
     const response: BatchResponse = { results, errors, demoUsage }
     return c.json(response)

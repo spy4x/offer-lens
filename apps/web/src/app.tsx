@@ -2,14 +2,21 @@ import { useEffect, useState } from "preact/hooks"
 import { Header } from "./components/Header.tsx"
 import { HomePage } from "./pages/HomePage.tsx"
 import { BatchPage } from "./pages/BatchPage.tsx"
+import { LoginPage } from "./pages/LoginPage.tsx"
+import { RegisterPage } from "./pages/RegisterPage.tsx"
+import { HistoryPage } from "./pages/HistoryPage.tsx"
 import { ToastContainer } from "./components/Toast.tsx"
-import { theme } from "./lib/state.ts"
+import { authToken, currentUser, setAuth, theme } from "./lib/state.ts"
+import { fetchMe } from "./lib/api.ts"
 
-type Page = "home" | "batch"
+type Page = "home" | "batch" | "login" | "register" | "history"
 
 function getPageFromPath(): Page {
   const path = location.pathname
   if (path === "/batch") return "batch"
+  if (path === "/login") return "login"
+  if (path === "/register") return "register"
+  if (path === "/history") return "history"
   return "home"
 }
 
@@ -22,13 +29,24 @@ export function App() {
     document.documentElement.setAttribute("data-theme", theme.value)
   }, [])
 
+  // Restore session: if token exists, verify it
+  useEffect(() => {
+    if (authToken.value && !currentUser.value) {
+      fetchMe().then((res) => {
+        setAuth(authToken.value, res.user)
+      }).catch(() => {
+        // Token invalid — clear
+        setAuth(null, null)
+      })
+    }
+  }, [])
+
   useEffect(() => {
     const handlePop = () => {
       setPage(getPageFromPath())
     }
     addEventListener("popstate", handlePop)
 
-    // Handle preloaded URL from query param
     const params = new URLSearchParams(location.search)
     const urlParam = params.get("url") || ""
     if (page === "home" && urlParam) {
@@ -45,6 +63,9 @@ export function App() {
       <main>
         {page === "home" && <HomePage preloadedUrl={preloadedUrl} />}
         {page === "batch" && <BatchPage />}
+        {page === "login" && <LoginPage />}
+        {page === "register" && <RegisterPage />}
+        {page === "history" && <HistoryPage />}
       </main>
 
       <footer class="mt-10 pt-5 border-t border-border text-center text-xs text-fg-3">
