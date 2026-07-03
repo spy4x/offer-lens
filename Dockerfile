@@ -9,7 +9,7 @@ COPY main.ts ./
 
 # Copy source
 COPY libs/ ./libs/
-COPY backend/ ./backend/
+COPY apps/api/ ./apps/api/
 COPY apps/web/static/ ./apps/web/static/
 
 # Pre-cache dependencies (tolerate failure)

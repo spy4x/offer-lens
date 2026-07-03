@@ -202,14 +202,20 @@ function renderResults(analysis) {
   // Hook Ideas
   if (analysis.hookIdeas?.length) {
     html += `<section class="section">
-      <h2>&#128203; HOOK IDEAS <button class="btn btn-small copy-all-btn" data-copy="${escAttr(analysis.hookIdeas.join("\n"))}">Copy All</button></h2>
+      <h2>&#128203; HOOK IDEAS <button class="btn btn-small copy-all-btn" data-copy="${
+      escAttr(analysis.hookIdeas.join("\n"))
+    }">Copy All</button></h2>
       <ol class="hook-list">
-        ${analysis.hookIdeas.map((h, i) => `
+        ${
+      analysis.hookIdeas.map((h, i) => `
           <li class="hook-item">
             <span>${esc(h)}</span>
-            <button class="btn-icon copy-btn" data-copy="${escAttr(h)}" title="Copy">&#128203;</button>
+            <button class="btn-icon copy-btn" data-copy="${
+        escAttr(h)
+      }" title="Copy">&#128203;</button>
           </li>
-        `).join("")}
+        `).join("")
+    }
       </ol>
     </section>`
   }
@@ -220,7 +226,9 @@ function renderResults(analysis) {
     <div class="card">
       <p><strong>Demographics:</strong> ${esc(aud.demographics || "")}</p>
       <p><strong>Interests:</strong> ${esc(aud.interests || "")}</p>
-      <p><strong>Likely Platform:</strong> <span class="badge">${esc(aud.likelyPlatform || "")}</span></p>
+      <p><strong>Likely Platform:</strong> <span class="badge">${
+    esc(aud.likelyPlatform || "")
+  }</span></p>
       <p class="text-muted"><strong>Notes:</strong> ${esc(aud.confidenceNotes || "")}</p>
     </div>
   </section>`
@@ -233,24 +241,38 @@ function renderResults(analysis) {
       <button class="tab ad-tab" data-tab="google">Google</button>
       <button class="tab ad-tab" data-tab="native">Native</button>
     </div>
-    <div class="tab-content" id="ad-facebook">${renderAdVariants(analysis.adCopy?.facebook || [])}</div>
-    <div class="tab-content hidden" id="ad-google">${renderAdVariants(analysis.adCopy?.google || [])}</div>
-    <div class="tab-content hidden" id="ad-native">${renderNativeVariants(analysis.adCopy?.native || [])}</div>
+    <div class="tab-content" id="ad-facebook">${
+    renderAdVariants(analysis.adCopy?.facebook || [])
+  }</div>
+    <div class="tab-content hidden" id="ad-google">${
+    renderAdVariants(analysis.adCopy?.google || [])
+  }</div>
+    <div class="tab-content hidden" id="ad-native">${
+    renderNativeVariants(analysis.adCopy?.native || [])
+  }</div>
   </section>`
 
   // Email & SMS
   html += `<section class="section">
     <h2>&#128231; EMAIL & SMS ANGLES</h2>
     <div class="card">
-      <h4>Subject Lines <button class="btn btn-small copy-all-btn" data-copy="${escAttr((email.subjectLines || []).join("\n"))}">Copy All</button></h4>
+      <h4>Subject Lines <button class="btn btn-small copy-all-btn" data-copy="${
+    escAttr((email.subjectLines || []).join("\n"))
+  }">Copy All</button></h4>
       <ul>
-        ${(email.subjectLines || []).map((s) => `
-          <li class="copy-row"><span>${esc(s)}</span><button class="btn-icon copy-btn" data-copy="${escAttr(s)}">&#128203;</button></li>
-        `).join("")}
+        ${
+    (email.subjectLines || []).map((s) => `
+          <li class="copy-row"><span>${esc(s)}</span><button class="btn-icon copy-btn" data-copy="${
+      escAttr(s)
+    }">&#128203;</button></li>
+        `).join("")
+  }
       </ul>
       <h4>Email Body Angle</h4>
       <p class="text-muted">${esc(email.bodyAngle || "")}</p>
-      <h4>SMS Pitch <button class="btn-icon copy-btn" data-copy="${escAttr(email.smsAngle || "")}">&#128203;</button></h4>
+      <h4>SMS Pitch <button class="btn-icon copy-btn" data-copy="${
+    escAttr(email.smsAngle || "")
+  }">&#128203;</button></h4>
       <p class="sms-pitch">${esc(email.smsAngle || "")}</p>
     </div>
   </section>`
@@ -260,11 +282,19 @@ function renderResults(analysis) {
     html += `<section class="section">
       <h2>&#128737; TRUST SIGNALS</h2>
       <div class="card">
-        ${analysis.trustSignals.map((ts) => {
-          const icon = ts.present ? "&#9989;" : "&#10060;"
-          const sc = ts.strength === "strong" ? "text-green" : ts.strength === "medium" ? "text-yellow" : "text-red"
-          return `<p>${icon} <strong>${esc(ts.type)}</strong> <span class="${sc}">(${ts.strength})</span>: ${esc(ts.detail)}</p>`
-        }).join("")}
+        ${
+      analysis.trustSignals.map((ts) => {
+        const icon = ts.present ? "&#9989;" : "&#10060;"
+        const sc = ts.strength === "strong"
+          ? "text-green"
+          : ts.strength === "medium"
+          ? "text-yellow"
+          : "text-red"
+        return `<p>${icon} <strong>${
+          esc(ts.type)
+        }</strong> <span class="${sc}">(${ts.strength})</span>: ${esc(ts.detail)}</p>`
+      }).join("")
+    }
       </div>
     </section>`
   }
@@ -274,10 +304,18 @@ function renderResults(analysis) {
     html += `<section class="section">
       <h2>&#9888; CONVERSION BLOCKERS</h2>
       <div class="card">
-        ${analysis.conversionBlockers.map((b) => {
-          const sev = b.severity === "high" ? "&#128308;" : b.severity === "medium" ? "&#128993;" : "&#128994;"
-          return `<div class="blocker"><p>${sev} <strong>${esc(b.issue)}</strong></p><p class="text-muted">Suggestion: ${esc(b.suggestion)}</p></div>`
-        }).join("")}
+        ${
+      analysis.conversionBlockers.map((b) => {
+        const sev = b.severity === "high"
+          ? "&#128308;"
+          : b.severity === "medium"
+          ? "&#128993;"
+          : "&#128994;"
+        return `<div class="blocker"><p>${sev} <strong>${
+          esc(b.issue)
+        }</strong></p><p class="text-muted">Suggestion: ${esc(b.suggestion)}</p></div>`
+      }).join("")
+    }
       </div>
     </section>`
   }
@@ -295,8 +333,12 @@ function renderResults(analysis) {
     <h2>&#128373; COMPETITIVE INTEL</h2>
     <div class="card">
       <p><strong>Likely Traffic:</strong> ${esc((intel.likelyTrafficSources || []).join(", "))}</p>
-      <p><strong>Est. Daily Spend:</strong> <span class="badge">${esc(intel.estimatedDailySpend || "")}</span></p>
-      <p><strong>Competitors Testing:</strong> ${esc(intel.whatCompetitorsAreLikelyTesting || "")}</p>
+      <p><strong>Est. Daily Spend:</strong> <span class="badge">${
+    esc(intel.estimatedDailySpend || "")
+  }</span></p>
+      <p><strong>Competitors Testing:</strong> ${
+    esc(intel.whatCompetitorsAreLikelyTesting || "")
+  }</p>
     </div>
   </section>`
 
@@ -333,7 +375,9 @@ function renderResults(analysis) {
       }
       const orig = btn.textContent
       btn.textContent = "Copied!"
-      setTimeout(() => { btn.textContent = orig }, 1500)
+      setTimeout(() => {
+        btn.textContent = orig
+      }, 1500)
     })
   })
 
@@ -345,9 +389,15 @@ function renderAdVariants(variants) {
   return variants.map((v, i) => `
     <div class="variant">
       <p class="variant-label">Variant ${i + 1}</p>
-      <p><strong>Headline:</strong> ${esc(v.headline)} <button class="btn-icon copy-btn" data-copy="${escAttr(v.headline)}">&#128203;</button></p>
-      <p><strong>Text:</strong> ${esc(v.primaryText)} <button class="btn-icon copy-btn" data-copy="${escAttr(v.primaryText)}">&#128203;</button></p>
-      <p><strong>CTA:</strong> <span class="badge">${esc(v.cta)}</span> <button class="btn-icon copy-btn" data-copy="${escAttr(v.cta)}">&#128203;</button></p>
+      <p><strong>Headline:</strong> ${
+    esc(v.headline)
+  } <button class="btn-icon copy-btn" data-copy="${escAttr(v.headline)}">&#128203;</button></p>
+      <p><strong>Text:</strong> ${
+    esc(v.primaryText)
+  } <button class="btn-icon copy-btn" data-copy="${escAttr(v.primaryText)}">&#128203;</button></p>
+      <p><strong>CTA:</strong> <span class="badge">${
+    esc(v.cta)
+  }</span> <button class="btn-icon copy-btn" data-copy="${escAttr(v.cta)}">&#128203;</button></p>
     </div>
   `).join("")
 }
@@ -357,9 +407,15 @@ function renderNativeVariants(variants) {
   return variants.map((v, i) => `
     <div class="variant">
       <p class="variant-label">Variant ${i + 1}</p>
-      <p><strong>Headline:</strong> ${esc(v.headline)} <button class="btn-icon copy-btn" data-copy="${escAttr(v.headline)}">&#128203;</button></p>
-      <p><strong>Body:</strong> ${esc(v.body)} <button class="btn-icon copy-btn" data-copy="${escAttr(v.body)}">&#128203;</button></p>
-      <p><strong>CTA:</strong> <span class="badge">${esc(v.cta)}</span> <button class="btn-icon copy-btn" data-copy="${escAttr(v.cta)}">&#128203;</button></p>
+      <p><strong>Headline:</strong> ${
+    esc(v.headline)
+  } <button class="btn-icon copy-btn" data-copy="${escAttr(v.headline)}">&#128203;</button></p>
+      <p><strong>Body:</strong> ${esc(v.body)} <button class="btn-icon copy-btn" data-copy="${
+    escAttr(v.body)
+  }">&#128203;</button></p>
+      <p><strong>CTA:</strong> <span class="badge">${
+    esc(v.cta)
+  }</span> <button class="btn-icon copy-btn" data-copy="${escAttr(v.cta)}">&#128203;</button></p>
     </div>
   `).join("")
 }
@@ -372,7 +428,8 @@ function renderBatchResults(data) {
 
   if (data.results?.length) {
     html += `<p><strong>${data.results.length} analyzed successfully</strong></p>`
-    html += `<table class="batch-table"><thead><tr><th>URL</th><th>Angle</th><th>Confidence</th><th>Top Hook</th><th>Top Blocker</th></tr></thead><tbody>`
+    html +=
+      `<table class="batch-table"><thead><tr><th>URL</th><th>Angle</th><th>Confidence</th><th>Top Hook</th><th>Top Blocker</th></tr></thead><tbody>`
     for (const r of data.results) {
       const a = r.analysis
       html += `<tr>
@@ -388,7 +445,9 @@ function renderBatchResults(data) {
 
   if (data.errors?.length) {
     html += `<p><strong class="text-red">${data.errors.length} errors</strong></p>`
-    html += `<ul class="error-list">${data.errors.map((e) => `<li>${esc(e.url)}: ${esc(e.error)}</li>`).join("")}</ul>`
+    html += `<ul class="error-list">${
+      data.errors.map((e) => `<li>${esc(e.url)}: ${esc(e.error)}</li>`).join("")
+    }</ul>`
   }
 
   html += `</section>`
@@ -401,7 +460,10 @@ function renderBatchResults(data) {
 
 function esc(str) {
   if (!str) return ""
-  return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;")
+  return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(
+    /"/g,
+    "&quot;",
+  )
 }
 
 function escAttr(str) {

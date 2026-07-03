@@ -1,7 +1,8 @@
 // LLM Prompt templates and structured output JSON schema
 import type { PageContent } from "@offerlens/shared"
 
-export const SYSTEM_PROMPT = `You are an expert affiliate marketing strategist and direct-response copywriter. You analyze landing pages and extract actionable intelligence for media buyers who run paid traffic to build email and SMS lists.
+export const SYSTEM_PROMPT =
+  `You are an expert affiliate marketing strategist and direct-response copywriter. You analyze landing pages and extract actionable intelligence for media buyers who run paid traffic to build email and SMS lists.
 
 For every page, identify:
 1. The PRIMARY angle being used (scarcity, authority, social proof, pain relief, curiosity, urgency, transformation, fear_of_missing_out) with confidence score (0-100) and explanation (max 200 chars)
@@ -54,13 +55,19 @@ Body Text (truncated):
 ${content.bodyText.slice(0, 8000)}
 
 Testimonials Found:
-${content.testimonials.length > 0 ? content.testimonials.map((t, i) => `  ${i + 1}. ${t}`).join("\n") : "  None detected"}
+${
+    content.testimonials.length > 0
+      ? content.testimonials.map((t, i) => `  ${i + 1}. ${t}`).join("\n")
+      : "  None detected"
+  }
 
 Pricing: ${content.pricing ?? "Not found"}
 
 OG Tags: ${JSON.stringify(content.ogTags)}
 
-Structured Data: ${content.structuredData ? "Present (truncated): " + content.structuredData.slice(0, 500) : "None"}
+Structured Data: ${
+    content.structuredData ? "Present (truncated): " + content.structuredData.slice(0, 500) : "None"
+  }
 
 Return the analysis as a JSON object matching this exact structure.`
 }

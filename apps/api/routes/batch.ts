@@ -4,7 +4,7 @@ import type { BatchRequest, BatchResponse, BatchResult } from "@offerlens/shared
 import { MAX_BATCH_URLS } from "@offerlens/shared"
 import { analyzeLandingPage } from "@offerlens/analyzer"
 import { Config } from "@offerlens/backend-services"
-import { checkDemoUsage, recordDemoUsage, getDemoUsage } from "../../services/demo-usage.ts"
+import { checkDemoUsage, getDemoUsage, recordDemoUsage } from "../services/demo-usage.ts"
 
 export const batchRoute = new Hono()
   .post("/", async (c) => {
@@ -63,9 +63,7 @@ export const batchRoute = new Hono()
     }
 
     // Calculate how many we can process with demo key
-    const urlsToProcess = body.apiKey
-      ? body.urls
-      : body.urls.slice(0, usage.remaining)
+    const urlsToProcess = body.apiKey ? body.urls : body.urls.slice(0, usage.remaining)
 
     const effectiveApiKey = body.apiKey || Config.demoApiKey
     const concurrency = Config.batchConcurrency

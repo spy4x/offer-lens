@@ -10,12 +10,15 @@ import { Config } from "../services/config.ts"
 const app = new Hono()
 
 // Middleware
-app.use("*", cors({
-  origin: "*",
-  allowMethods: ["GET", "POST", "OPTIONS"],
-  allowHeaders: ["Content-Type", "X-Session-Id", "Authorization"],
-  maxAge: 86400,
-}))
+app.use(
+  "*",
+  cors({
+    origin: "*",
+    allowMethods: ["GET", "POST", "OPTIONS"],
+    allowHeaders: ["Content-Type", "X-Session-Id", "Authorization"],
+    maxAge: 86400,
+  }),
+)
 
 app.use("*", logger())
 

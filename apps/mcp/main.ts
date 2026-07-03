@@ -10,7 +10,11 @@
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js"
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
-import { ListToolsRequestSchema, CallToolRequestSchema, type CallToolRequest } from "@modelcontextprotocol/sdk/types.js"
+import {
+  type CallToolRequest,
+  CallToolRequestSchema,
+  ListToolsRequestSchema,
+} from "@modelcontextprotocol/sdk/types.js"
 
 const BACKEND_URL = Deno.env.get("OFFERLENS_BACKEND_URL") || "http://localhost:8000"
 const USER_API_KEY = Deno.env.get("OFFERLENS_API_KEY") || ""
@@ -21,13 +25,38 @@ const port = HTTP_PORT || 3000
 
 // --- Stdio mode: MCP SDK ---
 if (!useHttp) {
-  const server = new Server({ name: "offerlens", version: "1.0.0" }, { capabilities: { tools: {} } })
+  const server = new Server({ name: "offerlens", version: "1.0.0" }, {
+    capabilities: { tools: {} },
+  })
 
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
     tools: [
-      { name: "analyze_offer", description: "Analyze a landing page. Returns structured intelligence: angle, hooks, ad copy, email/SMS angles, competitive intel.", inputSchema: { type: "object", properties: { url: { type: "string", description: "Landing page URL to analyze" } }, required: ["url"] } },
-      { name: "batch_analyze_offers", description: "Analyze multiple landing pages in parallel (max 50).", inputSchema: { type: "object", properties: { urls: { type: "array", items: { type: "string" }, description: "URLs (max 50)" } }, required: ["urls"] } },
-      { name: "check_usage", description: "Check remaining demo requests.", inputSchema: { type: "object", properties: {} } },
+      {
+        name: "analyze_offer",
+        description:
+          "Analyze a landing page. Returns structured intelligence: angle, hooks, ad copy, email/SMS angles, competitive intel.",
+        inputSchema: {
+          type: "object",
+          properties: { url: { type: "string", description: "Landing page URL to analyze" } },
+          required: ["url"],
+        },
+      },
+      {
+        name: "batch_analyze_offers",
+        description: "Analyze multiple landing pages in parallel (max 50).",
+        inputSchema: {
+          type: "object",
+          properties: {
+            urls: { type: "array", items: { type: "string" }, description: "URLs (max 50)" },
+          },
+          required: ["urls"],
+        },
+      },
+      {
+        name: "check_usage",
+        description: "Check remaining demo requests.",
+        inputSchema: { type: "object", properties: {} },
+      },
     ],
   }))
 
@@ -35,13 +64,19 @@ if (!useHttp) {
     const { name, arguments: args } = req.params
     try {
       if (name === "analyze_offer") {
-        if (!args?.url || typeof args.url !== "string") return { content: [{ type: "text", text: "Error: url required" }], isError: true }
+        if (!args?.url || typeof args.url !== "string") {
+          return { content: [{ type: "text", text: "Error: url required" }], isError: true }
+        }
         const r = await apiCall("/api/analyze", { url: args.url })
         return { content: [{ type: "text", text: JSON.stringify(r, null, 2) }] }
       }
       if (name === "batch_analyze_offers") {
-        if (!Array.isArray(args?.urls) || args.urls.length === 0) return { content: [{ type: "text", text: "Error: urls required" }], isError: true }
-        if (args.urls.length > 50) return { content: [{ type: "text", text: "Max 50 URLs" }], isError: true }
+        if (!Array.isArray(args?.urls) || args.urls.length === 0) {
+          return { content: [{ type: "text", text: "Error: urls required" }], isError: true }
+        }
+        if (args.urls.length > 50) {
+          return { content: [{ type: "text", text: "Max 50 URLs" }], isError: true }
+        }
         const r = await apiCall("/api/batch", { urls: args.urls })
         return { content: [{ type: "text", text: JSON.stringify(r, null, 2) }] }
       }
@@ -51,7 +86,13 @@ if (!useHttp) {
       }
       return { content: [{ type: "text", text: `Unknown tool: ${name}` }], isError: true }
     } catch (err) {
-      return { content: [{ type: "text", text: `Error: ${err instanceof Error ? err.message : String(err)}` }], isError: true }
+      return {
+        content: [{
+          type: "text",
+          text: `Error: ${err instanceof Error ? err.message : String(err)}`,
+        }],
+        isError: true,
+      }
     }
   })
 
@@ -65,7 +106,9 @@ if (!useHttp) {
     const url = new URL(req.url)
 
     if (url.pathname === "/health") {
-      return new Response(JSON.stringify({ status: "ok" }), { headers: { "Content-Type": "application/json" } })
+      return new Response(JSON.stringify({ status: "ok" }), {
+        headers: { "Content-Type": "application/json" },
+      })
     }
 
     if ((url.pathname === "/mcp" || url.pathname === "/") && req.method === "POST") {
@@ -79,9 +122,38 @@ if (!useHttp) {
         if (msg.method === "tools/list") {
           result = {
             tools: [
-              { name: "analyze_offer", description: "Analyze a landing page. Returns structured intelligence: angle, hooks, ad copy, email/SMS angles, competitive intel.", inputSchema: { type: "object", properties: { url: { type: "string", description: "Landing page URL to analyze" } }, required: ["url"] } },
-              { name: "batch_analyze_offers", description: "Analyze multiple landing pages in parallel (max 50).", inputSchema: { type: "object", properties: { urls: { type: "array", items: { type: "string" }, description: "URLs (max 50)" } }, required: ["urls"] } },
-              { name: "check_usage", description: "Check remaining demo requests.", inputSchema: { type: "object", properties: {} } },
+              {
+                name: "analyze_offer",
+                description:
+                  "Analyze a landing page. Returns structured intelligence: angle, hooks, ad copy, email/SMS angles, competitive intel.",
+                inputSchema: {
+                  type: "object",
+                  properties: {
+                    url: { type: "string", description: "Landing page URL to analyze" },
+                  },
+                  required: ["url"],
+                },
+              },
+              {
+                name: "batch_analyze_offers",
+                description: "Analyze multiple landing pages in parallel (max 50).",
+                inputSchema: {
+                  type: "object",
+                  properties: {
+                    urls: {
+                      type: "array",
+                      items: { type: "string" },
+                      description: "URLs (max 50)",
+                    },
+                  },
+                  required: ["urls"],
+                },
+              },
+              {
+                name: "check_usage",
+                description: "Check remaining demo requests.",
+                inputSchema: { type: "object", properties: {} },
+              },
             ],
           }
         } else if (msg.method === "tools/call") {
@@ -92,7 +164,9 @@ if (!useHttp) {
             if (!args.url || typeof args.url !== "string") throw new Error("url required")
             result = await apiCall("/api/analyze", { url: args.url })
           } else if (toolName === "batch_analyze_offers") {
-            if (!Array.isArray(args.urls) || args.urls.length === 0) throw new Error("urls required")
+            if (!Array.isArray(args.urls) || args.urls.length === 0) {
+              throw new Error("urls required")
+            }
             if (args.urls.length > 50) throw new Error("Max 50 URLs")
             result = await apiCall("/api/batch", { urls: args.urls })
           } else if (toolName === "check_usage") {
@@ -115,19 +189,26 @@ if (!useHttp) {
           ? { content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }] }
           : result
 
-        return new Response(JSON.stringify({ jsonrpc: "2.0", id: msg.id ?? null, result: responseResult }), {
-          headers: { "Content-Type": "application/json" },
-        })
+        return new Response(
+          JSON.stringify({ jsonrpc: "2.0", id: msg.id ?? null, result: responseResult }),
+          {
+            headers: { "Content-Type": "application/json" },
+          },
+        )
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err)
-        return new Response(JSON.stringify({ jsonrpc: "2.0", id: null, error: { code: -32603, message: msg } }), {
-          status: 500, headers: { "Content-Type": "application/json" },
-        })
+        return new Response(
+          JSON.stringify({ jsonrpc: "2.0", id: null, error: { code: -32603, message: msg } }),
+          {
+            status: 500,
+            headers: { "Content-Type": "application/json" },
+          },
+        )
       }
     }
 
     if ((url.pathname === "/mcp" || url.pathname === "/") && req.method === "GET") {
-      return new Response("data: {\"endpoint\":\"/mcp\"}\n\n", {
+      return new Response('data: {"endpoint":"/mcp"}\n\n', {
         headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache" },
       })
     }
@@ -138,7 +219,10 @@ if (!useHttp) {
 
 // Shared API helper
 async function apiCall(path: string, body?: Record<string, unknown>) {
-  const headers: Record<string, string> = { "Content-Type": "application/json", "X-Session-Id": SESSION_ID }
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "X-Session-Id": SESSION_ID,
+  }
   const opts: RequestInit = { method: body ? "POST" : "GET", headers }
   if (body) {
     const payload = { ...body }

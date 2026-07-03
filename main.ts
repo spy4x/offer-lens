@@ -2,24 +2,26 @@
 // Serves: Hono API (/api/*) + Web App (/*)
 // One process, one container, one port
 
-import { Hono, type Context } from "hono"
+import { type Context, Hono } from "hono"
 import { cors } from "hono/cors"
 import { logger } from "hono/logger"
-import { analyzeRoute } from "./backend/api/routes/analyze.ts"
-import { batchRoute } from "./backend/api/routes/batch.ts"
-import { usageRoute } from "./backend/api/routes/usage.ts"
-import { Config } from "./backend/services/config.ts"
+import { analyzeRoute } from "./apps/api/routes/analyze.ts"
+import { batchRoute } from "./apps/api/routes/batch.ts"
+import { usageRoute } from "./apps/api/routes/usage.ts"
+import { Config } from "./apps/api/services/config.ts"
 
 const app = new Hono()
-const BACKEND_URL = `http://localhost:${Config.port}`
 
 // --- Middleware ---
-app.use("*", cors({
-  origin: "*",
-  allowMethods: ["GET", "POST", "OPTIONS"],
-  allowHeaders: ["Content-Type", "X-Session-Id", "Authorization"],
-  maxAge: 86400,
-}))
+app.use(
+  "*",
+  cors({
+    origin: "*",
+    allowMethods: ["GET", "POST", "OPTIONS"],
+    allowHeaders: ["Content-Type", "X-Session-Id", "Authorization"],
+    maxAge: 86400,
+  }),
+)
 app.use("*", logger())
 
 // --- API Routes ---
@@ -29,11 +31,11 @@ app.route("/api/usage", usageRoute)
 app.get("/api/health", (c) => c.json({ status: "ok", timestamp: new Date().toISOString() }))
 
 // --- Static files for web app ---
-app.get("/styles.css", async (c) => {
+app.get("/styles.css", async (_c) => {
   const css = await Deno.readTextFile("./apps/web/static/styles.css")
   return new Response(css, { headers: { "Content-Type": "text/css; charset=utf-8" } })
 })
-app.get("/app.js", async (c) => {
+app.get("/app.js", async (_c) => {
   const js = await Deno.readTextFile("./apps/web/static/app.js")
   return new Response(js, { headers: { "Content-Type": "application/javascript; charset=utf-8" } })
 })
@@ -57,7 +59,9 @@ function serveWebPage(page: string) {
 
     if (page === "home" || page === "analyze") {
       const urlDisplay = page === "analyze"
-        ? `<div class="url-display"><span class="url-label">Analyzed page:</span><span class="url-text">${escHtml(urlParam)}</span></div>`
+        ? `<div class="url-display"><span class="url-label">Analyzed page:</span><span class="url-text">${
+          escHtml(urlParam)
+        }</span></div>`
         : `<form id="analyzeForm" class="analyze-form">
             <div class="input-group">
               <input type="url" id="urlInput" class="input input-lg" placeholder="Paste a landing page URL..." required />
@@ -68,7 +72,11 @@ function serveWebPage(page: string) {
       title = page === "analyze" ? "Analysis" : "Home"
       body = `<section class="hero">
         <h1>${page === "analyze" ? "Analysis Results" : "Analyze Any Landing Page in Seconds"}</h1>
-        ${page === "home" ? '<p class="hero-sub">Get angles, hooks, ad copy, email/SMS angles, and competitive intel — instantly.</p>' : ""}
+        ${
+        page === "home"
+          ? '<p class="hero-sub">Get angles, hooks, ad copy, email/SMS angles, and competitive intel — instantly.</p>'
+          : ""
+      }
         ${urlDisplay}
       </section>`
     } else if (page === "batch") {
@@ -133,7 +141,10 @@ function renderShell(title: string, body: string, extraScripts: string) {
 
 // --- Helpers ---
 function escHtml(str: string): string {
-  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;")
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(
+    /"/g,
+    "&quot;",
+  )
 }
 function escAttr(str: string): string {
   return str.replace(/"/g, "&quot;").replace(/`/g, "&#96;")

@@ -1,7 +1,7 @@
 // Analyzer: core analysis logic — scrape → prompt → LLM → structured output
 import type { LandingPageAnalysis } from "@offerlens/shared"
 import { scrapePage } from "@offerlens/scraper"
-import { SYSTEM_PROMPT, buildUserPrompt, ANALYSIS_JSON_SCHEMA } from "@offerlens/prompts"
+import { ANALYSIS_JSON_SCHEMA, buildUserPrompt, SYSTEM_PROMPT } from "@offerlens/prompts"
 
 const DEFAULT_API_BASE = "https://api.deepseek.com"
 const DEFAULT_MODEL = "deepseek-chat"
@@ -139,7 +139,7 @@ async function callLLM(
 
 function validateAnalysis(a: LandingPageAnalysis): void {
   const raw = a as unknown as Record<string, unknown>
-  
+
   const pa = raw.primaryAngle as Record<string, unknown> | undefined
   if (!pa?.type || typeof pa.confidence !== "number") {
     throw new Error("Missing primaryAngle")

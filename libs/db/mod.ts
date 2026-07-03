@@ -1,5 +1,5 @@
 // Database layer: Postgres with in-memory fallback for development
-import { type DemoUsage, DEMO_LIMIT } from "@offerlens/shared"
+import { DEMO_LIMIT, type DemoUsage } from "@offerlens/shared"
 
 export interface DbService {
   getUsage(sessionId: string): Promise<DemoUsage>

@@ -3,7 +3,7 @@ import { Hono } from "hono"
 import type { AnalyzeRequest, AnalyzeResponse } from "@offerlens/shared"
 import { analyzeLandingPage } from "@offerlens/analyzer"
 import { Config } from "@offerlens/backend-services"
-import { checkDemoUsage, recordDemoUsage, getDemoUsage } from "../../services/demo-usage.ts"
+import { checkDemoUsage, getDemoUsage, recordDemoUsage } from "../services/demo-usage.ts"
 
 export const analyzeRoute = new Hono()
   .post("/", async (c) => {
