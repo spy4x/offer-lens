@@ -29,7 +29,9 @@ export const authRoute = new Hono()
       return c.json({ error: "Invalid email format" }, 400)
     }
 
-    const result = await registerUser(body.email, body.password)
+    // Pass session ID to link anonymous analyses to new user
+    const sessionId = c.req.header("X-Session-Id") || undefined
+    const result = await registerUser(body.email, body.password, sessionId)
     if ("error" in result) {
       return c.json({ error: result.error }, 409)
     }

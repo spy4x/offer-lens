@@ -23,10 +23,14 @@ export function HistoryPage() {
     })
   }, [])
 
-  const handleReanalyze = (url: string) => {
-    // Copy URL to clipboard and redirect to home
+  const handleViewAnalysis = (id: number) => {
+    history.pushState(null, "", `/analyses/${id}`)
+    dispatchEvent(new PopStateEvent("popstate"))
+  }
+
+  const handleCopyUrl = (url: string) => {
     navigator.clipboard.writeText(url).then(() => {
-      showToast("URL copied — paste on home page", "success")
+      showToast("URL copied", "success")
     })
   }
 
@@ -61,7 +65,8 @@ export function HistoryPage() {
         {analyses.map((a) => (
           <div
             key={a.id}
-            class="bg-card border border-border rounded-lg px-4 py-3 flex items-center justify-between"
+            class="bg-card border border-border rounded-lg px-4 py-3 flex items-center justify-between cursor-pointer hover:bg-input/30"
+            onClick={() => handleViewAnalysis(a.id)}
           >
             <div class="flex-1 min-w-0">
               <p class="text-sm font-medium truncate">{a.url}</p>
@@ -76,7 +81,10 @@ export function HistoryPage() {
             </div>
             <button
               type="button"
-              onClick={() => handleReanalyze(a.url)}
+              onClick={(e) => {
+                e.stopPropagation()
+                handleCopyUrl(a.url)
+              }}
               class="text-xs px-2.5 py-1 bg-accent text-white rounded-lg font-medium hover:bg-accent-hover border-none cursor-pointer ml-3 shrink-0"
             >
               Copy URL

@@ -10,9 +10,17 @@ interface DemoUsage {
   hasDemoKey: boolean
 }
 
+interface TokenUsage {
+  promptTokens: number
+  completionTokens: number
+  totalTokens: number
+}
+
 interface AnalyzeResponse {
+  id?: number | null
   analysis: LandingPageAnalysis
   demoUsage?: DemoUsage
+  tokensUsed?: TokenUsage
 }
 
 interface BatchResponse {
@@ -25,6 +33,7 @@ interface BatchResult {
   url: string
   analysis?: LandingPageAnalysis
   error?: string
+  id?: number
 }
 
 // Replicated from shared types for SPA self-containment
@@ -198,6 +207,27 @@ export interface AnalysisSummary {
 
 export async function fetchHistory(): Promise<{ analyses: AnalysisSummary[] }> {
   return apiFetch("/api/analyses")
+}
+
+export interface AnalysisDetail {
+  id: number
+  url: string
+  analysis: LandingPageAnalysis
+  createdAt: string
+  tokensUsed?: TokenUsage
+}
+
+export async function fetchAnalysisById(id: number): Promise<AnalysisDetail> {
+  const headers: Record<string, string> = {}
+  const token = authToken.value
+  if (token) headers["Authorization"] = `Bearer ${token}`
+  // No auth required — public endpoint
+  const res = await fetch(`/api/analyses/${id}`, { headers })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: `HTTP ${res.status}` }))
+    throw new Error(err.error || `HTTP ${res.status}`)
+  }
+  return res.json()
 }
 
 // --- BYOK API ---

@@ -2,6 +2,7 @@
 import { Hono } from "hono"
 import { getDemoUsage } from "../services/demo-usage.ts"
 import { authenticateRequest } from "../services/auth.ts"
+import { getDb } from "@offerlens/db"
 
 export const usageRoute = new Hono()
   .get("/", async (c) => {
@@ -15,5 +16,19 @@ export const usageRoute = new Hono()
     }
 
     const usage = await getDemoUsage(sessionId || "", userId)
+
+    // If user has their own API key, mark demo counter as inactive
+    if (userId) {
+      try {
+        const db = getDb()
+        const activeProviders = await db.getActiveApiProviders(userId)
+        if (activeProviders.length > 0) {
+          usage.hasDemoKey = false
+        }
+      } catch {
+        // Non-fatal
+      }
+    }
+
     return c.json(usage)
   })

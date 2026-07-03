@@ -6,6 +6,11 @@ interface Props {
 }
 
 export function BatchResults({ results, errors }: Props) {
+  const goToAnalysis = (id: number) => {
+    history.pushState(null, "", `/analyses/${id}`)
+    dispatchEvent(new PopStateEvent("popstate"))
+  }
+
   return (
     <section class="mt-6 mb-6">
       <h2 class="text-lg mb-2.5 text-accent flex items-center justify-between">
@@ -31,7 +36,11 @@ export function BatchResults({ results, errors }: Props) {
               {results.map((r, i) => {
                 const a = r.analysis
                 return (
-                  <tr key={i} class="border-b border-border text-sm">
+                  <tr
+                    key={i}
+                    class="border-b border-border text-sm cursor-pointer hover:bg-input/50"
+                    onClick={() => r.id ? goToAnalysis(r.id) : undefined}
+                  >
                     <td class="text-xs break-all text-accent-hover px-2 py-1.5">
                       {esc(r.url)}
                     </td>

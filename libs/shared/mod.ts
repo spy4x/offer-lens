@@ -107,6 +107,7 @@ export interface BatchResult {
   url: string
   analysis?: LandingPageAnalysis
   error?: string
+  id?: number
 }
 
 export interface DemoUsage {
@@ -129,9 +130,17 @@ export interface AnalyzeRequest {
   customSections?: SectionPrompt[]
 }
 
+export interface TokenUsage {
+  promptTokens: number
+  completionTokens: number
+  totalTokens: number
+}
+
 export interface AnalyzeResponse {
+  id?: number | null
   analysis: LandingPageAnalysis
   demoUsage?: DemoUsage
+  tokensUsed?: TokenUsage
 }
 
 export interface BatchRequest {

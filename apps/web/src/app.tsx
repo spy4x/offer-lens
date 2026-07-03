@@ -7,21 +7,35 @@ import { RegisterPage } from "./pages/RegisterPage.tsx"
 import { HistoryPage } from "./pages/HistoryPage.tsx"
 import { SettingsPage } from "./pages/SettingsPage.tsx"
 import { SectionsPage } from "./pages/SectionsPage.tsx"
+import { AnalysisPage } from "./pages/AnalysisPage.tsx"
 import { ToastContainer } from "./components/Toast.tsx"
 import { authToken, currentUser, setAuth, theme } from "./lib/state.ts"
 import { fetchMe } from "./lib/api.ts"
 
-type Page = "home" | "batch" | "login" | "register" | "history" | "settings" | "sections"
+type Page =
+  | { type: "home" }
+  | { type: "batch" }
+  | { type: "login" }
+  | { type: "register" }
+  | { type: "history" }
+  | { type: "settings" }
+  | { type: "sections" }
+  | { type: "analysis"; id: number }
 
 function getPageFromPath(): Page {
   const path = location.pathname
-  if (path === "/batch") return "batch"
-  if (path === "/login") return "login"
-  if (path === "/register") return "register"
-  if (path === "/history") return "history"
-  if (path === "/settings") return "settings"
-  if (path === "/sections") return "sections"
-  return "home"
+
+  // Match /analyses/:id first (before generic fallback)
+  const analysisMatch = path.match(/^\/analyses\/(\d+)$/)
+  if (analysisMatch) return { type: "analysis", id: parseInt(analysisMatch[1], 10) }
+
+  if (path === "/batch") return { type: "batch" }
+  if (path === "/login") return { type: "login" }
+  if (path === "/register") return { type: "register" }
+  if (path === "/history") return { type: "history" }
+  if (path === "/settings") return { type: "settings" }
+  if (path === "/sections") return { type: "sections" }
+  return { type: "home" }
 }
 
 export function App() {
@@ -53,7 +67,7 @@ export function App() {
 
     const params = new URLSearchParams(location.search)
     const urlParam = params.get("url") || ""
-    if (page === "home" && urlParam) {
+    if (page.type === "home" && urlParam) {
       setPreloadedUrl(urlParam)
     }
 
@@ -65,13 +79,14 @@ export function App() {
       <Header />
 
       <main>
-        {page === "home" && <HomePage preloadedUrl={preloadedUrl} />}
-        {page === "batch" && <BatchPage />}
-        {page === "login" && <LoginPage />}
-        {page === "register" && <RegisterPage />}
-        {page === "history" && <HistoryPage />}
-        {page === "settings" && <SettingsPage />}
-        {page === "sections" && <SectionsPage />}
+        {page.type === "home" && <HomePage preloadedUrl={preloadedUrl} />}
+        {page.type === "batch" && <BatchPage />}
+        {page.type === "login" && <LoginPage />}
+        {page.type === "register" && <RegisterPage />}
+        {page.type === "history" && <HistoryPage />}
+        {page.type === "settings" && <SettingsPage />}
+        {page.type === "sections" && <SectionsPage />}
+        {page.type === "analysis" && <AnalysisPage id={page.id} />}
       </main>
 
       <footer class="mt-10 pt-5 border-t border-border text-center text-xs text-fg-3">

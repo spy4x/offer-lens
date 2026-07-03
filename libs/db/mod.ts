@@ -151,13 +151,54 @@ class DbService extends DbServiceBase {
 
   async storeAnalysis(
     sessionId: string,
-    userId: string,
+    userId: string | null,
     url: string,
     analysis: LandingPageAnalysis,
-  ): Promise<void> {
+    tokens?: { prompt: number; completion: number; total: number },
+  ): Promise<{ id: number }> {
+    const [row] = await this.db<{ id: number }[]>`
+      INSERT INTO analyses (session_id, user_id, url, analysis, tokens_prompt, tokens_completion, tokens_total)
+      VALUES (${sessionId || ""}, ${userId}, ${url}, ${JSON.stringify(analysis)}, ${
+      tokens?.prompt ?? 0
+    }, ${tokens?.completion ?? 0}, ${tokens?.total ?? 0})
+      RETURNING id
+    `
+    return row
+  }
+
+  async getAnalysisById(id: number): Promise<
+    {
+      id: number
+      session_id: string
+      user_id: string | null
+      url: string
+      analysis: LandingPageAnalysis
+      tokens_prompt: number
+      tokens_completion: number
+      tokens_total: number
+      created_at: Date
+    } | null
+  > {
+    const rows = await this.db<
+      {
+        id: number
+        session_id: string
+        user_id: string | null
+        url: string
+        analysis: LandingPageAnalysis
+        tokens_prompt: number
+        tokens_completion: number
+        tokens_total: number
+        created_at: Date
+      }[]
+    >`SELECT id, session_id, user_id, url, analysis, tokens_prompt, tokens_completion, tokens_total, created_at FROM analyses WHERE id = ${id}`
+    return rows[0] || null
+  }
+
+  async linkSessionAnalyses(sessionId: string, userId: string): Promise<void> {
     await this.db`
-      INSERT INTO analyses (session_id, user_id, url, analysis)
-      VALUES (${sessionId || ""}, ${userId}, ${url}, ${JSON.stringify(analysis)})
+      UPDATE analyses SET user_id = ${userId}
+      WHERE session_id = ${sessionId} AND (user_id IS NULL OR user_id = '')
     `
   }
 
