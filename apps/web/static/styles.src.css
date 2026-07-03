@@ -1,0 +1,74 @@
+/* OfferLens — TailwindCSS v4 source */
+@import "tailwindcss";
+@source "../";
+@source "../../main.ts";
+
+/* Custom theme — maps existing design tokens to Tailwind v4 */
+@theme {
+  --color-surface: #0f1117;
+  --color-surface-2: #1a1d27;
+  --color-card: #1e2130;
+  --color-input: #252836;
+  --color-border: #2d3143;
+  --color-accent: #6366f1;
+  --color-accent-hover: #818cf8;
+  --color-fg: #e4e6f0;
+  --color-fg-2: #8b8fa8;
+  --color-fg-3: #646890;
+  --color-green: #34d399;
+  --color-yellow: #fbbf24;
+  --color-red: #f87171;
+}
+
+/* Base layer — dark mode defaults */
+@layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+
+  a {
+    text-decoration: none;
+  }
+  a:hover {
+    text-decoration: underline;
+  }
+}
+
+/* Utility classes used by JS classList operations */
+.hidden {
+  display: none !important;
+}
+.warning {
+  color: var(--color-yellow, #fbbf24);
+}
+.danger {
+  color: var(--color-red, #f87171);
+}
+.active {
+  background-color: var(--color-accent, #6366f1);
+  color: white;
+  border-color: var(--color-accent, #6366f1);
+}
+
+/* Spinner — can't easily replicate with utilities */
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--color-border, #2d3143);
+  border-top-color: var(--color-accent, #6366f1);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 16px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

@@ -32,7 +32,7 @@
     "mcp:dev": "deno run -A --env-file=.env apps/mcp/main.ts",
     "db:migrate": "deno run -A --env-file=.env libs/db/migrate.ts",
     "ext:build": "mkdir -p apps/ext/build && deno bundle --outdir apps/ext/build apps/ext/src/background.ts apps/ext/src/content.ts apps/ext/src/sidepanel.ts",
-    "web:css": "deno run -A npm:@tailwindcss/cli@^4 -i apps/web/static/styles.css -o /tmp/offerlens-web.css && cat /tmp/offerlens-web.css > apps/web/static/styles.css && rm /tmp/offerlens-web.css",
+    "web:css": "deno run -A npm:@tailwindcss/cli@^4 -i apps/web/static/styles.src.css -o apps/web/static/styles.css",
     "check": "deno fmt --check && deno lint && deno check main.ts",
     "fix": "deno fmt && deno lint --fix",
     "test": "deno test -A --env-file=.env libs/"

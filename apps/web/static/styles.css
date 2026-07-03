@@ -28,6 +28,7 @@
     --radius-lg: 0.5rem;
     --default-font-family: var(--font-sans);
     --default-mono-font-family: var(--font-mono);
+    --color-surface: #0f1117;
     --color-card: #1e2130;
     --color-input: #252836;
     --color-border: #2d3143;
@@ -250,11 +251,17 @@
   .min-h-\[200px\] {
     min-height: 200px;
   }
+  .min-h-screen {
+    min-height: 100vh;
+  }
   .w-full {
     width: 100%;
   }
   .max-w-\[650px\] {
     max-width: 650px;
+  }
+  .max-w-\[900px\] {
+    max-width: 900px;
   }
   .flex-1 {
     flex: 1;
@@ -342,6 +349,9 @@
       background-color: color-mix(in oklab, var(--color-red) 10%, transparent);
     }
   }
+  .bg-surface {
+    background-color: var(--color-surface);
+  }
   .bg-transparent {
     background-color: transparent;
   }
@@ -362,6 +372,9 @@
   }
   .px-4\.5 {
     padding-inline: calc(var(--spacing) * 4.5);
+  }
+  .px-5 {
+    padding-inline: calc(var(--spacing) * 5);
   }
   .px-7 {
     padding-inline: calc(var(--spacing) * 7);
@@ -384,6 +397,9 @@
   .py-3\.5 {
     padding-block: calc(var(--spacing) * 3.5);
   }
+  .py-4 {
+    padding-block: calc(var(--spacing) * 4);
+  }
   .py-10 {
     padding-block: calc(var(--spacing) * 10);
   }
@@ -392,6 +408,9 @@
   }
   .pb-4 {
     padding-bottom: calc(var(--spacing) * 4);
+  }
+  .pb-10 {
+    padding-bottom: calc(var(--spacing) * 10);
   }
   .pl-5 {
     padding-left: calc(var(--spacing) * 5);
@@ -535,7 +554,6 @@
   }
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    min-height: 100vh;
   }
   a {
     text-decoration: none;

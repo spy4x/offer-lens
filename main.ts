@@ -107,8 +107,8 @@ function renderShell(title: string, body: string, extraScripts: string) {
   <link rel="stylesheet" href="/styles.css" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#128269;</text></svg>" />
 </head>
-<body class="dark">
-  <div id="app">
+<body class="dark bg-surface text-fg min-h-screen">
+  <div id="app" class="max-w-[900px] mx-auto px-5 py-4 pb-10">
     <header class="flex justify-between items-center pb-4 border-b border-border mb-6">
       <div class="flex items-center gap-3">
         <a href="/" class="text-xl font-bold text-accent hover:no-underline">&#128269; OfferLens</a>
