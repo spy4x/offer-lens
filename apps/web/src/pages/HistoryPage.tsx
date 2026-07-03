@@ -28,9 +28,9 @@ export function HistoryPage() {
     dispatchEvent(new PopStateEvent("popstate"))
   }
 
-  const handleCopyUrl = (url: string) => {
-    navigator.clipboard.writeText(url).then(() => {
-      showToast("URL copied", "success")
+  const handleShare = (id: number) => {
+    navigator.clipboard.writeText(globalThis.location.origin + `/analyses/${id}`).then(() => {
+      showToast("Share link copied!", "success")
     })
   }
 
@@ -61,37 +61,76 @@ export function HistoryPage() {
 
       {analyses.length === 0 && <p class="text-center text-fg-2 py-10">No analyses yet.</p>}
 
-      <div class="flex flex-col gap-2">
-        {analyses.map((a) => (
-          <div
-            key={a.id}
-            class="bg-card border border-border rounded-lg px-4 py-3 flex items-center justify-between cursor-pointer hover:bg-input/30"
-            onClick={() => handleViewAnalysis(a.id)}
-          >
-            <div class="flex-1 min-w-0">
-              <p class="text-sm font-medium truncate">{a.url}</p>
-              <p class="text-xs text-fg-2">
-                {new Date(a.createdAt).toLocaleDateString()}
-                {a.primaryAngle && (
-                  <span class="ml-2 bg-accent/20 text-accent px-1.5 py-0.5 rounded text-xs">
-                    {a.primaryAngle}
-                  </span>
-                )}
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation()
-                handleCopyUrl(a.url)
-              }}
-              class="text-xs px-2.5 py-1 bg-accent text-white rounded-lg font-medium hover:bg-accent-hover border-none cursor-pointer ml-3 shrink-0"
-            >
-              Copy URL
-            </button>
-          </div>
-        ))}
-      </div>
+      {analyses.length > 0 && (
+        <table class="w-full border-collapse">
+          <thead>
+            <tr class="bg-input text-left text-xs text-fg-2">
+              <th class="px-2 py-1.5">URL</th>
+              <th class="px-2 py-1.5">Date</th>
+              <th class="px-2 py-1.5">Angle</th>
+              <th class="px-2 py-1.5">Conf.</th>
+              <th class="px-2 py-1.5">Top Hook</th>
+              <th class="px-2 py-1.5">Top Blocker</th>
+              <th class="px-2 py-1.5"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {analyses.map((a) => (
+              <tr
+                key={a.id}
+                class="border-b border-border text-sm cursor-pointer hover:bg-input/30"
+                onClick={() => handleViewAnalysis(a.id)}
+              >
+                <td class="text-xs break-all text-accent-hover px-2 py-1.5 max-w-[200px] truncate">
+                  {esc(a.url)}
+                </td>
+                <td class="text-xs text-fg-2 px-2 py-1.5 whitespace-nowrap">
+                  {new Date(a.createdAt).toLocaleDateString()}
+                </td>
+                <td class="px-2 py-1.5">
+                  {a.primaryAngle
+                    ? (
+                      <span class="bg-accent text-white px-2 py-0.5 rounded text-xs font-semibold uppercase">
+                        {esc(a.primaryAngle)}
+                      </span>
+                    )
+                    : <span class="text-fg-3">—</span>}
+                </td>
+                <td class="px-2 py-1.5 text-green font-semibold">
+                  {a.confidence != null ? `${a.confidence}%` : "—"}
+                </td>
+                <td class="text-xs text-fg-3 px-2 py-1.5 max-w-[180px] truncate">
+                  {esc(a.topHook || "") || "—"}
+                </td>
+                <td class="text-xs text-fg-3 px-2 py-1.5 max-w-[180px] truncate">
+                  {esc(a.topBlocker || "") || "—"}
+                </td>
+                <td class="px-2 py-1.5 text-right">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleShare(a.id)
+                    }}
+                    class="text-xs px-2.5 py-1 bg-accent text-white rounded-lg font-medium hover:bg-accent-hover border-none cursor-pointer shrink-0"
+                  >
+                    Share
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </section>
   )
+}
+
+function esc(str: unknown): string {
+  if (!str) return ""
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
 }

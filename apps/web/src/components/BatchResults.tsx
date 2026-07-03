@@ -30,6 +30,7 @@ export function BatchResults({ results, errors }: Props) {
                 <th class="px-2 py-1.5">Conf.</th>
                 <th class="px-2 py-1.5">Top Hook</th>
                 <th class="px-2 py-1.5">Top Blocker</th>
+                <th class="px-2 py-1.5">Custom</th>
               </tr>
             </thead>
             <tbody>
@@ -57,6 +58,18 @@ export function BatchResults({ results, errors }: Props) {
                     </td>
                     <td class="px-2 py-1.5">
                       {esc(a?.conversionBlockers?.[0]?.issue || "")}
+                    </td>
+                    <td class="px-2 py-1.5 text-center">
+                      {a?.customSections?.length
+                        ? (
+                          <span
+                            class="text-xs text-accent font-medium"
+                            title={`${a.customSections.length} custom sections`}
+                          >
+                            +{a.customSections.length}
+                          </span>
+                        )
+                        : <span class="text-fg-3 text-xs">—</span>}
                     </td>
                   </tr>
                 )

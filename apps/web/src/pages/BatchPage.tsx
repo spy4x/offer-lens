@@ -1,17 +1,31 @@
 import { useEffect, useState } from "preact/hooks"
-import { analyzeBatch, type BatchResult, fetchUsage } from "../lib/api.ts"
-import { demoUsage, errorMessage, isLoading } from "../lib/state.ts"
+import { analyzeBatch, type BatchResult, fetchSections, fetchUsage } from "../lib/api.ts"
+import { authToken, demoUsage, errorMessage, isLoading } from "../lib/state.ts"
 import { BatchResults } from "../components/BatchResults.tsx"
 
 export function BatchPage() {
   const [urls, setUrls] = useState("")
   const [results, setResults] = useState<BatchResult[]>([])
   const [errors, setErrors] = useState<{ url: string; error: string }[]>([])
+  const [customSections, setCustomSections] = useState<
+    Array<{ title: string; prompt: string }>
+  >([])
 
   useEffect(() => {
     fetchUsage().then((u) => {
       demoUsage.value = u
     }).catch(() => {})
+    // Load custom sections if authenticated
+    if (authToken.value) {
+      fetchSections().then((data) => {
+        setCustomSections(
+          data.sections.filter((s) => s.isActive).map((s) => ({
+            title: s.title,
+            prompt: s.prompt,
+          })),
+        )
+      }).catch(() => {})
+    }
   }, [])
 
   const handleAnalyze = async () => {
@@ -31,7 +45,10 @@ export function BatchPage() {
     setErrors([])
 
     try {
-      const data = await analyzeBatch(lines)
+      const data = await analyzeBatch(
+        lines,
+        customSections.length > 0 ? customSections : undefined,
+      )
       if (data.demoUsage) demoUsage.value = data.demoUsage
       setResults(data.results || [])
       setErrors(data.errors || [])
