@@ -8,6 +8,8 @@ import { logger } from "hono/logger"
 import { analyzeRoute } from "./apps/api/routes/analyze.ts"
 import { batchRoute } from "./apps/api/routes/batch.ts"
 import { usageRoute } from "./apps/api/routes/usage.ts"
+import { authRoute } from "./apps/api/routes/auth.ts"
+import { historyRoute } from "./apps/api/routes/history.ts"
 import { Config } from "./apps/api/services/config.ts"
 
 const app = new Hono()
@@ -28,6 +30,8 @@ app.use("*", logger())
 app.route("/api/analyze", analyzeRoute)
 app.route("/api/batch", batchRoute)
 app.route("/api/usage", usageRoute)
+app.route("/api/auth", authRoute)
+app.route("/api/analyses", historyRoute)
 app.get("/api/health", (c) => c.json({ status: "ok", timestamp: new Date().toISOString() }))
 
 // --- SPA static files ---
@@ -78,6 +82,9 @@ async function spaHandler(c: Context) {
 app.get("/", spaHandler)
 app.get("/analyze", spaHandler)
 app.get("/batch", spaHandler)
+app.get("/login", spaHandler)
+app.get("/register", spaHandler)
+app.get("/history", spaHandler)
 
 // --- Error handlers ---
 app.notFound((c) => c.json({ error: "Not found" }, 404))

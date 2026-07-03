@@ -4,12 +4,21 @@ import type { AnalyzeRequest, AnalyzeResponse } from "@offerlens/shared"
 import { analyzeLandingPage } from "@offerlens/analyzer"
 import { Config } from "@offerlens/backend-services"
 import { checkDemoUsage, getDemoUsage, recordDemoUsage } from "../services/demo-usage.ts"
+import { authenticateRequest } from "../services/auth.ts"
+
+function getSessionId(c: { req: { header: (name: string) => string | undefined } }): string | null {
+  return c.req.header("X-Session-Id") || null
+}
 
 export const analyzeRoute = new Hono()
   .post("/", async (c) => {
-    const sessionId = c.req.header("X-Session-Id")
-    if (!sessionId) {
-      return c.json({ error: "X-Session-Id header is required" }, 400)
+    // Try auth first, fall back to session
+    const auth = await authenticateRequest(c)
+    const userId = auth.user?.sub
+    const sessionId = getSessionId(c)
+
+    if (!userId && !sessionId) {
+      return c.json({ error: "Authorization header or X-Session-Id header required" }, 400)
     }
 
     let body: AnalyzeRequest
@@ -31,7 +40,7 @@ export const analyzeRoute = new Hono()
     }
 
     // Check demo usage
-    const { canProceed, usage } = await checkDemoUsage(sessionId, body.apiKey)
+    const { canProceed, usage } = await checkDemoUsage(sessionId || "", body.apiKey, userId)
     if (!canProceed) {
       if (usage.limit === 0) {
         return c.json(
@@ -57,10 +66,32 @@ export const analyzeRoute = new Hono()
 
       // Record usage (only for demo key, not user's own key)
       if (!body.apiKey) {
-        await recordDemoUsage(sessionId, "analyze", 1)
+        await recordDemoUsage(sessionId || "", "analyze", 1, userId)
       }
 
-      const demoUsage = body.apiKey ? undefined : await getDemoUsage(sessionId)
+      // Store analysis in DB if user is authenticated
+      if (userId) {
+        try {
+          const { default: postgres } = await import("postgres")
+          const sql = postgres({
+            host: Deno.env.get("DB_HOST") || "localhost",
+            port: parseInt(Deno.env.get("DB_PORT") || "5432"),
+            database: Deno.env.get("DB_NAME") || "offerlens",
+            user: Deno.env.get("DB_USER") || "offerlens",
+            password: Deno.env.get("DB_PASS") || "offerlens",
+            max: 2,
+          })
+          await sql`
+            INSERT INTO analyses (session_id, user_id, url, analysis)
+            VALUES (${sessionId || ""}, ${userId}, ${body.url}, ${JSON.stringify(analysis)})
+          `
+          await sql.end()
+        } catch {
+          // Storage failure is non-fatal
+        }
+      }
+
+      const demoUsage = body.apiKey ? undefined : await getDemoUsage(sessionId || "", userId)
 
       const response: AnalyzeResponse = { analysis, demoUsage }
       return c.json(response)

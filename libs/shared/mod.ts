@@ -139,6 +139,34 @@ export interface ErrorResponse {
   limit?: number
 }
 
+// Auth types
+
+export interface AuthUser {
+  id: string
+  email?: string
+  isAnonymous: boolean
+  usageCount: number
+  createdAt: string
+}
+
+export interface AuthRegisterRequest {
+  email: string
+  password: string
+}
+
+export interface AuthLoginRequest {
+  email: string
+  password: string
+}
+
+export interface AuthResponse {
+  token: string
+  user: AuthUser
+}
+
+export const ANONYMOUS_LIMIT = 3
+export const GLOBAL_LIMIT = 50
+
 // Constants
 
 export const DEMO_LIMIT = 50
