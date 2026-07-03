@@ -1,0 +1,6 @@
+# OfferLens CI — runs on self-hosted Woodpecker
+steps:
+  check:
+    image: denoland/deno:2.9.0
+    commands:
+      - deno task check

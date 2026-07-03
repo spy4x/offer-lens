@@ -1,6 +1,6 @@
 # OfferLens — Dockerfile
 # Stage 1: Build SPA
-FROM denoland/deno:alpine-2.2.0 AS builder
+FROM denoland/deno:alpine-2.9.0 AS builder
 
 WORKDIR /build
 
@@ -20,7 +20,7 @@ RUN deno cache npm:vite@^6 npm:@preact/preset-vite@^2 2>/dev/null || true
 RUN deno run -A npm:vite@^6 build apps/web
 
 # Stage 2: Runtime
-FROM denoland/deno:alpine-2.2.0
+FROM denoland/deno:alpine-2.9.0
 
 WORKDIR /app
 
@@ -41,4 +41,5 @@ RUN deno cache main.ts 2>/dev/null || true
 EXPOSE 8000
 
 # Env vars set via Docker environment, NOT hardcoded
-CMD ["run", "-A", "main.ts"]
+# Run migration then start server
+CMD deno run -A libs/db/migrate.ts && deno run -A main.ts

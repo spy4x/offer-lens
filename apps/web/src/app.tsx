@@ -5,11 +5,12 @@ import { BatchPage } from "./pages/BatchPage.tsx"
 import { LoginPage } from "./pages/LoginPage.tsx"
 import { RegisterPage } from "./pages/RegisterPage.tsx"
 import { HistoryPage } from "./pages/HistoryPage.tsx"
+import { SettingsPage } from "./pages/SettingsPage.tsx"
 import { ToastContainer } from "./components/Toast.tsx"
 import { authToken, currentUser, setAuth, theme } from "./lib/state.ts"
 import { fetchMe } from "./lib/api.ts"
 
-type Page = "home" | "batch" | "login" | "register" | "history"
+type Page = "home" | "batch" | "login" | "register" | "history" | "settings"
 
 function getPageFromPath(): Page {
   const path = location.pathname
@@ -17,6 +18,7 @@ function getPageFromPath(): Page {
   if (path === "/login") return "login"
   if (path === "/register") return "register"
   if (path === "/history") return "history"
+  if (path === "/settings") return "settings"
   return "home"
 }
 
@@ -66,6 +68,7 @@ export function App() {
         {page === "login" && <LoginPage />}
         {page === "register" && <RegisterPage />}
         {page === "history" && <HistoryPage />}
+        {page === "settings" && <SettingsPage />}
       </main>
 
       <footer class="mt-10 pt-5 border-t border-border text-center text-xs text-fg-3">

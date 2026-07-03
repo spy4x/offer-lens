@@ -190,3 +190,57 @@ export interface AnalysisSummary {
 export async function fetchHistory(): Promise<{ analyses: AnalysisSummary[] }> {
   return apiFetch("/api/analyses")
 }
+
+// --- BYOK API ---
+
+export interface SavedKey {
+  id: number
+  provider: string
+  baseUrl: string
+  model: string
+  keyHint: string
+  isActive: boolean
+  createdAt: string
+}
+
+export interface SaveKeyRequest {
+  provider: string
+  apiKey: string
+  baseUrl?: string
+  model?: string
+}
+
+export interface TestKeyResult {
+  success: boolean
+  model?: string
+  error?: string
+}
+
+export async function fetchKeys(): Promise<{ keys: SavedKey[] }> {
+  return apiFetch("/api/keys")
+}
+
+export async function saveKey(
+  req: SaveKeyRequest,
+): Promise<{ success: boolean; provider: string; keyHint: string }> {
+  return apiFetch("/api/keys", req)
+}
+
+export async function deleteKey(provider: string): Promise<{ success: boolean }> {
+  const headers: Record<string, string> = {}
+  const token = authToken.value
+  if (token) headers["Authorization"] = `Bearer ${token}`
+  const res = await fetch(`/api/keys/${encodeURIComponent(provider)}`, {
+    method: "DELETE",
+    headers,
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: `HTTP ${res.status}` }))
+    throw new Error(err.error || `HTTP ${res.status}`)
+  }
+  return res.json()
+}
+
+export async function testKey(provider: string): Promise<TestKeyResult> {
+  return apiFetch(`/api/keys/test?provider=${encodeURIComponent(provider)}`)
+}

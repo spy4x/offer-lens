@@ -1,5 +1,5 @@
 # OfferLens MCP Server — Dockerfile
-FROM denoland/deno:alpine-2.2.0
+FROM denoland/deno:alpine-2.9.0
 
 WORKDIR /app
 

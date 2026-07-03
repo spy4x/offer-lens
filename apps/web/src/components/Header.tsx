@@ -55,6 +55,13 @@ export function Header() {
           ? (
             <>
               <a
+                href="/settings"
+                onClick={navTo("/settings")}
+                class="text-xs px-2.5 py-1 bg-input border border-border rounded-lg font-medium hover:bg-border no-underline text-fg-2"
+              >
+                ⚙️ Settings
+              </a>
+              <a
                 href="/history"
                 onClick={navTo("/history")}
                 class="text-xs px-2.5 py-1 bg-input border border-border rounded-lg font-medium hover:bg-border no-underline text-fg-2"
@@ -108,6 +115,13 @@ export function Header() {
           {user
             ? (
               <>
+                <a
+                  href="/settings"
+                  onClick={navTo("/settings")}
+                  class="text-xs px-2.5 py-1 bg-input border border-border rounded-lg no-underline text-fg-2"
+                >
+                  ⚙️ Settings
+                </a>
                 <a
                   href="/history"
                   onClick={navTo("/history")}

@@ -193,6 +193,79 @@ class DbService extends DbServiceBase {
       VALUES (${sessionId}, ${endpoint}, ${count})
     `
   }
+
+  // ── User API keys ops ──
+
+  async saveApiKey(
+    userId: string,
+    provider: string,
+    keyEncrypted: string,
+    keyHint: string,
+    baseUrl = "",
+    model = "",
+  ): Promise<void> {
+    await this.db`
+      INSERT INTO user_api_keys (user_id, provider, key_encrypted, key_hint, base_url, model)
+      VALUES (${userId}, ${provider}, ${keyEncrypted}, ${keyHint}, ${baseUrl}, ${model})
+      ON CONFLICT (user_id, provider)
+      DO UPDATE SET
+        key_encrypted = EXCLUDED.key_encrypted,
+        key_hint = EXCLUDED.key_hint,
+        base_url = EXCLUDED.base_url,
+        model = EXCLUDED.model,
+        is_active = true,
+        updated_at = NOW()
+    `
+  }
+
+  async getApiKeys(userId: string): Promise<
+    Array<{
+      id: number
+      provider: string
+      base_url: string
+      model: string
+      key_hint: string
+      is_active: boolean
+      created_at: Date
+    }>
+  > {
+    return this.db`
+      SELECT id, provider, base_url, model, key_hint, is_active, created_at
+      FROM user_api_keys
+      WHERE user_id = ${userId}
+      ORDER BY created_at DESC
+    `
+  }
+
+  async getApiKeyEncrypted(
+    userId: string,
+    provider: string,
+  ): Promise<{ key_encrypted: string; base_url: string; model: string } | null> {
+    const rows = await this.db<
+      { key_encrypted: string; base_url: string; model: string }[]
+    >`
+      SELECT key_encrypted, base_url, model
+      FROM user_api_keys
+      WHERE user_id = ${userId} AND provider = ${provider} AND is_active = true
+      LIMIT 1
+    `
+    return rows[0] || null
+  }
+
+  async deleteApiKey(userId: string, provider: string): Promise<void> {
+    await this.db`
+      DELETE FROM user_api_keys
+      WHERE user_id = ${userId} AND provider = ${provider}
+    `
+  }
+
+  async getActiveApiProviders(userId: string): Promise<string[]> {
+    const rows = await this.db<{ provider: string }[]>`
+      SELECT provider FROM user_api_keys
+      WHERE user_id = ${userId} AND is_active = true
+    `
+    return rows.map((r: { provider: string }) => r.provider)
+  }
 }
 
 // Singleton
