@@ -1,7 +1,7 @@
 // Backend API: analyze endpoint
 // BYOK: auto-uses user's saved key when available instead of demo key
 import { Hono } from "hono"
-import type { AnalyzeRequest, AnalyzeResponse } from "@offerlens/shared"
+import type { AnalyzeRequest } from "@offerlens/shared"
 import { analyzeLandingPage } from "@offerlens/analyzer"
 import { Config } from "@offerlens/backend-services"
 import { getDb } from "@offerlens/db"
@@ -94,34 +94,51 @@ export const analyzeRoute = new Hono()
     }
 
     try {
-      const analysis = await analyzeLandingPage(body.url, {
+      const result = await analyzeLandingPage(body.url, {
         apiKey: effectiveApiKey,
         apiBase,
         model,
         customSections: body.customSections,
       })
 
+      const { analysis, usage } = result
+
       // Record usage only when demo key used
       if (!usedSavedKey && !body.apiKey) {
         await recordDemoUsage(sessionId || "", "analyze", 1, userId)
       }
 
-      // Store analysis in DB if user is authenticated
-      if (userId) {
-        try {
-          const db = getDb()
-          await db.storeAnalysis(sessionId || "", userId, body.url, analysis)
-        } catch (err) {
-          console.error("Failed to store analysis:", err)
-          // Storage failure is non-fatal
-        }
+      // Store analysis in DB for all users (session-based or authenticated)
+      let analysisId: number | null = null
+      try {
+        const db = getDb()
+        const stored = await db.storeAnalysis(
+          sessionId || "",
+          userId || null,
+          body.url,
+          analysis,
+          {
+            prompt: usage.promptTokens,
+            completion: usage.completionTokens,
+            total: usage.totalTokens,
+          },
+        )
+        analysisId = stored.id
+      } catch (err) {
+        console.error("Failed to store analysis:", err)
+        // Storage failure is non-fatal
       }
 
-      const demoUsage = (usedSavedKey || !!body.apiKey)
+      const demoUsageData = (usedSavedKey || !!body.apiKey)
         ? undefined
         : await getDemoUsage(sessionId || "", userId)
 
-      const response: AnalyzeResponse = { analysis, demoUsage }
+      const response = {
+        id: analysisId,
+        analysis,
+        demoUsage: demoUsageData,
+        tokensUsed: usage,
+      }
       return c.json(response)
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)

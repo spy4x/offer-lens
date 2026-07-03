@@ -28,6 +28,7 @@ export async function createAnonymousUser(sessionId: string): Promise<JwtPayload
 export async function registerUser(
   email: string,
   password: string,
+  sessionId?: string,
 ): Promise<
   {
     token: string
@@ -41,6 +42,16 @@ export async function registerUser(
 
   const passwordHash = await hashPassword(password)
   const user = await db.createUser(email, passwordHash)
+
+  // Link anonymous session analyses to new user
+  if (sessionId) {
+    try {
+      await db.linkSessionAnalyses(sessionId, user.id)
+    } catch (err) {
+      console.error("Failed to link session analyses:", err)
+      // Non-fatal
+    }
+  }
 
   const payload: JwtPayload = {
     sub: user.id,

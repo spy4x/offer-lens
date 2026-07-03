@@ -91,6 +91,7 @@ app.get("/register", spaHandler)
 app.get("/history", spaHandler)
 app.get("/settings", spaHandler)
 app.get("/sections", spaHandler)
+app.get("/analyses/:id", spaHandler)
 
 // --- Error handlers ---
 app.notFound((c) => c.json({ error: "Not found" }, 404))

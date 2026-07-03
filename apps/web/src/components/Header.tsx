@@ -88,13 +88,22 @@ export function Header() {
             </>
           )
           : (
-            <a
-              href="/login"
-              onClick={navTo("/login")}
-              class="text-xs px-2.5 py-1 bg-input border border-border rounded-lg font-medium hover:bg-border no-underline text-fg-2"
-            >
-              Login
-            </a>
+            <>
+              <a
+                href="/register"
+                onClick={navTo("/register")}
+                class="text-xs px-2.5 py-1 bg-accent text-white rounded-lg font-medium hover:bg-accent-hover no-underline"
+              >
+                Sign up
+              </a>
+              <a
+                href="/login"
+                onClick={navTo("/login")}
+                class="text-xs px-2.5 py-1 bg-input border border-border rounded-lg font-medium hover:bg-border no-underline text-fg-2"
+              >
+                Login
+              </a>
+            </>
           )}
 
         <button
@@ -157,13 +166,22 @@ export function Header() {
               </>
             )
             : (
-              <a
-                href="/login"
-                onClick={navTo("/login")}
-                class="text-xs px-2.5 py-1 bg-input border border-border rounded-lg no-underline text-fg-2"
-              >
-                Login
-              </a>
+              <>
+                <a
+                  href="/register"
+                  onClick={navTo("/register")}
+                  class="text-xs px-2.5 py-1 bg-accent text-white rounded-lg font-medium no-underline"
+                >
+                  Sign up
+                </a>
+                <a
+                  href="/login"
+                  onClick={navTo("/login")}
+                  class="text-xs px-2.5 py-1 bg-input border border-border rounded-lg no-underline text-fg-2"
+                >
+                  Login
+                </a>
+              </>
             )}
           <button
             type="button"

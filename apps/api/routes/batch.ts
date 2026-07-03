@@ -3,12 +3,23 @@
 import { Hono } from "hono"
 import type { BatchRequest, BatchResponse, BatchResult } from "@offerlens/shared"
 import { MAX_BATCH_URLS } from "@offerlens/shared"
+import type { LandingPageAnalysis } from "@offerlens/shared"
+import type { TokenUsage } from "@offerlens/analyzer"
 import { analyzeLandingPage } from "@offerlens/analyzer"
 import { Config } from "@offerlens/backend-services"
 import { getDb } from "@offerlens/db"
 import { decrypt } from "@offerlens/encrypt"
 import { checkDemoUsage, getDemoUsage, recordDemoUsage } from "../services/demo-usage.ts"
 import { authenticateRequest } from "../services/auth.ts"
+
+// Internal result with token tracking
+interface BatchResultWithMeta {
+  url: string
+  analysis?: LandingPageAnalysis
+  error?: string
+  id?: number
+  tokensUsed?: TokenUsage
+}
 
 function getSessionId(c: { req: { header: (name: string) => string | undefined } }): string | null {
   return c.req.header("X-Session-Id") || null
@@ -114,19 +125,19 @@ export const batchRoute = new Hono()
     const concurrency = Config.batchConcurrency
 
     // Process in batches
-    const results: BatchResult[] = []
+    const results: BatchResultWithMeta[] = []
     const errors: Array<{ url: string; error: string }> = []
 
     for (let i = 0; i < urlsToProcess.length; i += concurrency) {
       const batch = urlsToProcess.slice(i, i + concurrency)
-      const batchPromises = batch.map(async (url): Promise<BatchResult> => {
-        const analysis = await analyzeLandingPage(url, {
+      const batchPromises = batch.map(async (url) => {
+        const result = await analyzeLandingPage(url, {
           apiKey: effectiveApiKey,
           apiBase,
           model,
           customSections: body.customSections,
         })
-        return { url, analysis }
+        return { url, analysis: result.analysis, tokensUsed: result.usage }
       })
       const batchResults = await Promise.allSettled(batchPromises)
 
@@ -153,25 +164,44 @@ export const batchRoute = new Hono()
       await recordDemoUsage(sessionId || "", "batch", urlsToProcess.length, userId)
     }
 
-    // Store analyses in DB if user is authenticated
-    if (userId) {
-      try {
-        const db = getDb()
-        for (const r of results) {
-          if (r.analysis) {
-            await db.storeAnalysis(sessionId || "", userId, r.url, r.analysis)
-          }
+    // Store analyses in DB for all users (session-based or authenticated)
+    try {
+      const db = getDb()
+      for (const r of results) {
+        if (r.analysis) {
+          const stored = await db.storeAnalysis(
+            sessionId || "",
+            userId || null,
+            r.url,
+            r.analysis,
+            r.tokensUsed
+              ? {
+                prompt: r.tokensUsed.promptTokens,
+                completion: r.tokensUsed.completionTokens,
+                total: r.tokensUsed.totalTokens,
+              }
+              : undefined,
+          )
+          r.id = stored.id
         }
-      } catch (err) {
-        console.error("Failed to store batch analyses:", err)
-        // Storage failure is non-fatal
       }
+    } catch (err) {
+      console.error("Failed to store batch analyses:", err)
+      // Storage failure is non-fatal
     }
 
     const demoUsage = (usedSavedKey || !!body.apiKey)
       ? undefined
       : await getDemoUsage(sessionId || "", userId)
 
-    const response: BatchResponse = { results, errors, demoUsage }
+    // Map to response types (strip internal fields)
+    const responseResults: BatchResult[] = results.map((r) => ({
+      url: r.url,
+      analysis: r.analysis,
+      error: r.error,
+      id: r.id,
+    }))
+
+    const response: BatchResponse = { results: responseResults, errors, demoUsage }
     return c.json(response)
   })

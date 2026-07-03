@@ -114,6 +114,13 @@ export function HomePage({ preloadedUrl }: Props) {
         activeSections.length > 0 ? activeSections : undefined,
       )
       if (data.demoUsage) demoUsage.value = data.demoUsage
+      // Redirect to analysis page if we got an ID back
+      if (data.id) {
+        history.pushState(null, "", `/analyses/${data.id}`)
+        dispatchEvent(new PopStateEvent("popstate"))
+        return
+      }
+      // Fallback: inline display
       setAnalysis(data.analysis)
     } catch (err) {
       errorMessage.value = err instanceof Error ? err.message : "Analysis failed"
@@ -147,7 +154,7 @@ export function HomePage({ preloadedUrl }: Props) {
               <div class="flex-1">
                 <input
                   id="urlInput"
-                  type="url"
+                  type="text"
                   value={url}
                   onInput={(e) =>
                     handleUrlInput((e.target as HTMLInputElement).value)}
@@ -155,7 +162,6 @@ export function HomePage({ preloadedUrl }: Props) {
                     showValidation && validationError ? "border-red" : "border-border"
                   }`}
                   placeholder="Paste a landing page URL..."
-                  required
                 />
                 {showValidation && validationError && (
                   <p class="text-xs text-red text-left mt-1 ml-1">{validationError}</p>

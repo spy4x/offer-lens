@@ -14,13 +14,24 @@ export interface AnalyzeOptions {
   customSections?: Array<{ title: string; prompt: string }>
 }
 
+export interface TokenUsage {
+  promptTokens: number
+  completionTokens: number
+  totalTokens: number
+}
+
+export interface AnalyzeResult {
+  analysis: LandingPageAnalysis
+  usage: TokenUsage
+}
+
 /**
- * Analyze a landing page: scrape → build prompt → call LLM → return structured analysis.
+ * Analyze a landing page: scrape → build prompt → call LLM → return structured analysis + token usage.
  */
 export async function analyzeLandingPage(
   url: string,
   options: AnalyzeOptions = {},
-): Promise<LandingPageAnalysis> {
+): Promise<AnalyzeResult> {
   const apiKey = options.apiKey || Deno.env.get("DEMO_OPENAI_API_KEY") ||
     Deno.env.get("OPENAI_API_KEY") ||
     Deno.env.get("DEEPSEEK_API_KEY")
@@ -43,8 +54,8 @@ export async function analyzeLandingPage(
   let lastError: Error | null = null
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
-      const analysis = await callLLM(apiKey, apiBase, model, userPrompt)
-      return analysis
+      const result = await callLLM(apiKey, apiBase, model, userPrompt)
+      return result
     } catch (err) {
       lastError = err instanceof Error ? err : new Error(String(err))
       if (attempt < maxRetries) {
@@ -62,7 +73,7 @@ async function callLLM(
   apiBase: string,
   model: string,
   userPrompt: string,
-): Promise<LandingPageAnalysis> {
+): Promise<{ analysis: LandingPageAnalysis; usage: TokenUsage }> {
   const endpoint = `${apiBase}/v1/chat/completions`
 
   const body: Record<string, unknown> = {
@@ -135,7 +146,14 @@ async function callLLM(
   // Validate required fields exist
   validateAnalysis(normalized)
 
-  return normalized
+  // Capture token usage from API response
+  const usage: TokenUsage = {
+    promptTokens: data.usage?.prompt_tokens ?? data.usage?.promptTokens ?? 0,
+    completionTokens: data.usage?.completion_tokens ?? data.usage?.completionTokens ?? 0,
+    totalTokens: data.usage?.total_tokens ?? data.usage?.totalTokens ?? 0,
+  }
+
+  return { analysis: normalized, usage }
 }
 
 function validateAnalysis(a: LandingPageAnalysis): void {

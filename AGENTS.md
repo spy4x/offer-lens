@@ -35,6 +35,7 @@ chore(deps): bump deno to 2.2
 - Update PR after every human interaction
 - Remove `[WIP]` only when task is fully complete
 - Keep PR body accurate
+- Add `Closes #<issue-number>` in PR body to auto-close issue on merge
 
 ```bash
 gh pr create --fill
