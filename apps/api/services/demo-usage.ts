@@ -47,10 +47,12 @@ export async function checkDemoUsage(
 
   // Legacy: session-based tracking
   const db = getDb()
-  const usage = await db.getUsage(sessionId)
+  const used = await db.getSessionUsage(sessionId)
+  const remaining = Math.max(0, DEMO_LIMIT - used)
+  const usage: DemoUsage = { used, limit: DEMO_LIMIT, remaining, hasDemoKey: true }
 
   return {
-    canProceed: usage.remaining > 0,
+    canProceed: remaining > 0,
     usage,
   }
 }
@@ -72,7 +74,9 @@ export async function recordDemoUsage(
 
   // Legacy: session-based
   const db = getDb()
-  return db.recordUsage(sessionId, endpoint, count)
+  await db.recordSessionUsage(sessionId, endpoint, count)
+  const used = await db.getSessionUsage(sessionId)
+  return { used, limit: DEMO_LIMIT, remaining: Math.max(0, DEMO_LIMIT - used), hasDemoKey: true }
 }
 
 /**
@@ -85,5 +89,6 @@ export async function getDemoUsage(sessionId: string, userId?: string): Promise<
   }
 
   const db = getDb()
-  return db.getUsage(sessionId)
+  const used = await db.getSessionUsage(sessionId)
+  return { used, limit: DEMO_LIMIT, remaining: Math.max(0, DEMO_LIMIT - used), hasDemoKey: true }
 }

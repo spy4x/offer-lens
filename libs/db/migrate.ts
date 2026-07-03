@@ -1,17 +1,16 @@
 // Database migration runner
 // Run: deno run -A libs/db/migrate.ts
+// Uses singleton sql from mod.ts — DB must be configured via env
 
-import postgres from "postgres"
+import { sql } from "./mod.ts"
 
 async function migrate() {
-  const sql = postgres({
-    host: Deno.env.get("DB_HOST") || "localhost",
-    port: parseInt(Deno.env.get("DB_PORT") || "5432"),
-    database: Deno.env.get("DB_NAME") || "offerlens",
-    user: Deno.env.get("DB_USER") || "offerlens",
-    password: Deno.env.get("DB_PASS") || "offerlens",
-    max: 2,
-  })
+  if (!sql) {
+    console.error(
+      "DB not configured. Set DB_HOST (and DB_PORT/DB_NAME/DB_USER/DB_PASS) or DATABASE_URL.",
+    )
+    Deno.exit(1)
+  }
 
   try {
     // Create migrations table if not exists
@@ -58,8 +57,9 @@ async function migrate() {
     }
 
     console.log("\nMigrations complete.")
-  } finally {
-    await sql.end()
+  } catch (err) {
+    console.error("Migration failed:", err)
+    Deno.exit(1)
   }
 }
 

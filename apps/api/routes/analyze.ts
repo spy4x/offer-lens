@@ -3,6 +3,7 @@ import { Hono } from "hono"
 import type { AnalyzeRequest, AnalyzeResponse } from "@offerlens/shared"
 import { analyzeLandingPage } from "@offerlens/analyzer"
 import { Config } from "@offerlens/backend-services"
+import { getDb } from "@offerlens/db"
 import { checkDemoUsage, getDemoUsage, recordDemoUsage } from "../services/demo-usage.ts"
 import { authenticateRequest } from "../services/auth.ts"
 
@@ -72,21 +73,10 @@ export const analyzeRoute = new Hono()
       // Store analysis in DB if user is authenticated
       if (userId) {
         try {
-          const { default: postgres } = await import("postgres")
-          const sql = postgres({
-            host: Deno.env.get("DB_HOST") || "localhost",
-            port: parseInt(Deno.env.get("DB_PORT") || "5432"),
-            database: Deno.env.get("DB_NAME") || "offerlens",
-            user: Deno.env.get("DB_USER") || "offerlens",
-            password: Deno.env.get("DB_PASS") || "offerlens",
-            max: 2,
-          })
-          await sql`
-            INSERT INTO analyses (session_id, user_id, url, analysis)
-            VALUES (${sessionId || ""}, ${userId}, ${body.url}, ${JSON.stringify(analysis)})
-          `
-          await sql.end()
-        } catch {
+          const db = getDb()
+          await db.storeAnalysis(sessionId || "", userId, body.url, analysis)
+        } catch (err) {
+          console.error("Failed to store analysis:", err)
           // Storage failure is non-fatal
         }
       }

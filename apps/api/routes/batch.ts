@@ -4,6 +4,7 @@ import type { BatchRequest, BatchResponse, BatchResult } from "@offerlens/shared
 import { MAX_BATCH_URLS } from "@offerlens/shared"
 import { analyzeLandingPage } from "@offerlens/analyzer"
 import { Config } from "@offerlens/backend-services"
+import { getDb } from "@offerlens/db"
 import { checkDemoUsage, getDemoUsage, recordDemoUsage } from "../services/demo-usage.ts"
 import { authenticateRequest } from "../services/auth.ts"
 
@@ -118,25 +119,14 @@ export const batchRoute = new Hono()
     // Store analyses in DB if user is authenticated
     if (userId) {
       try {
-        const { default: postgres } = await import("postgres")
-        const sql = postgres({
-          host: Deno.env.get("DB_HOST") || "localhost",
-          port: parseInt(Deno.env.get("DB_PORT") || "5432"),
-          database: Deno.env.get("DB_NAME") || "offerlens",
-          user: Deno.env.get("DB_USER") || "offerlens",
-          password: Deno.env.get("DB_PASS") || "offerlens",
-          max: 2,
-        })
+        const db = getDb()
         for (const r of results) {
           if (r.analysis) {
-            await sql`
-              INSERT INTO analyses (session_id, user_id, url, analysis)
-              VALUES (${sessionId || ""}, ${userId}, ${r.url}, ${JSON.stringify(r.analysis)})
-            `
+            await db.storeAnalysis(sessionId || "", userId, r.url, r.analysis)
           }
         }
-        await sql.end()
-      } catch {
+      } catch (err) {
+        console.error("Failed to store batch analyses:", err)
         // Storage failure is non-fatal
       }
     }

@@ -1,108 +1,204 @@
-// Database layer: Postgres with in-memory fallback for development
-import { DEMO_LIMIT, type DemoUsage } from "@offerlens/shared"
+// Database layer — Postgres singleton with domain service
+// Reference pattern: ~/sync/code/financy/libs/server/db/+index.ts
+import postgres from "postgres"
+import type { LandingPageAnalysis } from "@offerlens/shared"
 
-export interface DbService {
-  getUsage(sessionId: string): Promise<DemoUsage>
-  recordUsage(sessionId: string, endpoint: string, count: number): Promise<DemoUsage>
-}
+export type Transaction = postgres.TransactionSql
+type Sql = postgres.Sql
 
-// In-memory store for dev without Postgres
-class MemoryDbService implements DbService {
-  private store = new Map<string, number>()
+// --- Singleton connection ---
 
-  async getUsage(sessionId: string): Promise<DemoUsage> {
-    const used = this.store.get(sessionId) || 0
-    return {
-      used,
-      limit: DEMO_LIMIT,
-      remaining: DEMO_LIMIT - used,
-      hasDemoKey: true,
-    }
-  }
-
-  async recordUsage(sessionId: string, _endpoint: string, count: number): Promise<DemoUsage> {
-    const current = this.store.get(sessionId) || 0
-    this.store.set(sessionId, current + count)
-    const used = current + count
-    return {
-      used,
-      limit: DEMO_LIMIT,
-      remaining: DEMO_LIMIT - used,
-      hasDemoKey: true,
-    }
-  }
-}
-
-// Postgres-backed service
-class PostgresDbService implements DbService {
-  private sql: ReturnType<typeof import("postgres").default> | null = null
-
-  private async getClient() {
-    if (this.sql) return this.sql
-
-    const postgresMod = await import("postgres")
-    const postgres = postgresMod.default
-
-    this.sql = postgres({
-      host: Deno.env.get("DB_HOST") || "localhost",
-      port: parseInt(Deno.env.get("DB_PORT") || "5432"),
-      database: Deno.env.get("DB_NAME") || "offerlens",
-      user: Deno.env.get("DB_USER") || "offerlens",
-      password: Deno.env.get("DB_PASS") || "offerlens",
-      max: 5,
+function buildSql(): Sql | null {
+  const url = Deno.env.get("DATABASE_URL")
+  if (url) {
+    return postgres(url, {
+      max: 10,
+      connection: { application_name: "offerlens" },
     })
-    return this.sql
   }
 
-  async getUsage(sessionId: string): Promise<DemoUsage> {
-    try {
-      const sql = await this.getClient()
-      const rows = await sql<
-        { total: number }[]
-      >`SELECT COALESCE(SUM(urls_processed), 0) as total FROM demo_usage WHERE session_id = ${sessionId}`
-      const used = Number(rows[0]?.total || 0)
-      return {
-        used,
-        limit: DEMO_LIMIT,
-        remaining: DEMO_LIMIT - used,
-        hasDemoKey: true,
-      }
-    } catch {
-      // Fallback to memory if DB is not available
-      return { used: 0, limit: DEMO_LIMIT, remaining: DEMO_LIMIT, hasDemoKey: true }
-    }
+  const host = Deno.env.get("DB_HOST")
+  if (!host) return null
+
+  return postgres({
+    host,
+    port: parseInt(Deno.env.get("DB_PORT") || "5432"),
+    database: Deno.env.get("DB_NAME") || "offerlens",
+    user: Deno.env.get("DB_USER") || "offerlens",
+    password: Deno.env.get("DB_PASS"),
+    max: 10,
+    connection: { application_name: "offerlens" },
+  })
+}
+
+export const sql = buildSql()
+
+// --- Base class with transaction support ---
+
+export class DbServiceBase {
+  protected db: Sql | Transaction
+
+  constructor() {
+    if (!sql) throw new Error("DB not configured (set DB_HOST or DATABASE_URL)")
+    this.db = sql
   }
 
-  async recordUsage(sessionId: string, endpoint: string, count: number): Promise<DemoUsage> {
-    try {
-      const sql = await this.getClient()
-      await sql`
-        INSERT INTO demo_usage (session_id, endpoint, urls_processed)
-        VALUES (${sessionId}, ${endpoint}, ${count})
-      `
-      return this.getUsage(sessionId)
-    } catch {
-      // Fallback
-      return { used: 0, limit: DEMO_LIMIT, remaining: DEMO_LIMIT, hasDemoKey: true }
-    }
+  protected setDb(s: Sql | Transaction): void {
+    this.db = s
+  }
+
+  async begin<T>(fn: (tx: this) => Promise<T>): Promise<T> {
+    return (this.db as Sql).begin((transaction: Transaction) => {
+      const service = Object.create(this) as this
+      service.setDb(transaction)
+      return fn(service)
+    }) as Promise<T>
+  }
+
+  async connect(): Promise<void> {
+    await this.db`SELECT 1`
+  }
+
+  async shutdown(): Promise<void> {
+    await (this.db as Sql).end({ timeout: 5 })
   }
 }
 
-// Factory: returns the appropriate DB service
-export function createDbService(): DbService {
-  const dbUrl = Deno.env.get("DATABASE_URL")
-  const dbHost = Deno.env.get("DB_HOST")
+// --- Domain service ---
 
-  if (dbUrl || dbHost) {
-    return new PostgresDbService()
+class DbService extends DbServiceBase {
+  // ── User ops ──
+
+  async findOrCreateAnonymousUser(sessionId: string): Promise<{ id: string }> {
+    const existing = await this.db<{ id: string }[]>`
+      SELECT u.id FROM users u
+      JOIN demo_usage d ON d.user_id = u.id
+      WHERE d.session_id = ${sessionId} AND u.is_anonymous = true
+      LIMIT 1
+    `
+    if (existing.length > 0) return existing[0]
+
+    const [user] = await this.db<{ id: string }[]>`
+      INSERT INTO users (is_anonymous) VALUES (true) RETURNING id
+    `
+    return user
   }
 
-  return new MemoryDbService()
+  async getUserByEmail(email: string) {
+    const rows = await this.db<
+      {
+        id: string
+        password_hash: string | null
+        is_anonymous: boolean
+        usage_count: number
+        created_at: Date
+      }[]
+    >`SELECT id, password_hash, is_anonymous, usage_count, created_at FROM users WHERE email = ${email}`
+    return rows[0] || null
+  }
+
+  async getUserById(id: string) {
+    const rows = await this.db<
+      {
+        id: string
+        email: string | null
+        is_anonymous: boolean
+        usage_count: number
+        created_at: Date
+      }[]
+    >`SELECT id, email, is_anonymous, usage_count, created_at FROM users WHERE id = ${id}`
+    return rows[0] || null
+  }
+
+  async emailTakenByOther(email: string, excludeUserId: string): Promise<boolean> {
+    const rows = await this.db<
+      { id: string }[]
+    >`SELECT id FROM users WHERE email = ${email} AND id != ${excludeUserId}`
+    return rows.length > 0
+  }
+
+  async createUser(
+    email: string,
+    passwordHash: string,
+  ): Promise<{ id: string; created_at: Date }> {
+    const [user] = await this.db<{ id: string; created_at: Date }[]>`
+      INSERT INTO users (email, password_hash, is_anonymous)
+      VALUES (${email}, ${passwordHash}, false)
+      RETURNING id, created_at
+    `
+    return user
+  }
+
+  async attachPassword(userId: string, email: string, passwordHash: string): Promise<void> {
+    await this.db`
+      UPDATE users SET email = ${email}, password_hash = ${passwordHash}, is_anonymous = false
+      WHERE id = ${userId}
+    `
+  }
+
+  async getUserUsage(userId: string): Promise<number> {
+    const [row] = await this.db<
+      { usage_count: number }[]
+    >`SELECT usage_count FROM users WHERE id = ${userId}`
+    return row?.usage_count ?? 0
+  }
+
+  async incrementUsage(userId: string, count: number): Promise<void> {
+    await this.db`UPDATE users SET usage_count = usage_count + ${count} WHERE id = ${userId}`
+  }
+
+  // ── Analysis ops ──
+
+  async storeAnalysis(
+    sessionId: string,
+    userId: string,
+    url: string,
+    analysis: LandingPageAnalysis,
+  ): Promise<void> {
+    await this.db`
+      INSERT INTO analyses (session_id, user_id, url, analysis)
+      VALUES (${sessionId || ""}, ${userId}, ${url}, ${JSON.stringify(analysis)})
+    `
+  }
+
+  async getHistory(
+    userId: string,
+    limit = 100,
+  ): Promise<
+    Array<{ id: number; url: string; created_at: Date; analysis: Record<string, unknown> }>
+  > {
+    return this.db<
+      { id: number; url: string; created_at: Date; analysis: Record<string, unknown> }[]
+    >`
+      SELECT id, url, created_at, analysis
+      FROM analyses
+      WHERE user_id = ${userId}
+      ORDER BY created_at DESC
+      LIMIT ${limit}
+    `
+  }
+
+  // ── Demo usage ops ──
+
+  async getSessionUsage(sessionId: string): Promise<number> {
+    const [row] = await this.db<{ total: number }[]>`
+      SELECT COALESCE(SUM(urls_processed), 0) as total FROM demo_usage WHERE session_id = ${sessionId}
+    `
+    return Number(row?.total ?? 0)
+  }
+
+  async recordSessionUsage(sessionId: string, endpoint: string, count: number): Promise<void> {
+    await this.db`
+      INSERT INTO demo_usage (session_id, endpoint, urls_processed)
+      VALUES (${sessionId}, ${endpoint}, ${count})
+    `
+  }
 }
 
 // Singleton
 let _db: DbService | null = null
+
 export function getDb(): DbService {
-  if (!_db) _db = createDbService()
+  if (!_db) _db = new DbService()
   return _db
 }
