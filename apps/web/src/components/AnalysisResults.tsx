@@ -29,6 +29,9 @@ export function AnalysisResults({ analysis }: Props) {
       {analysis.competitorAngles?.length > 0 && (
         <CompetitorAnglesSection angles={analysis.competitorAngles} />
       )}
+      {analysis.customSections?.length > 0 && (
+        <CustomSectionsSection results={analysis.customSections} />
+      )}
     </div>
   )
 }
@@ -317,6 +320,22 @@ function CompetitorAnglesSection({ angles }: { angles: string[] }) {
       <ul class="bg-card border border-border rounded-lg px-4.5 py-3.5">
         {angles.map((a, i) => <li key={i}>{esc(a)}</li>)}
       </ul>
+    </CollapsibleSection>
+  )
+}
+
+// Custom sections results
+function CustomSectionsSection({ results }: { results: Array<{ title: string; answer: string }> }) {
+  return (
+    <CollapsibleSection title="Custom Analysis" defaultOpen>
+      <div class="flex flex-col gap-3">
+        {results.map((r, i) => (
+          <div key={i} class="bg-card border border-border rounded-lg px-4.5 py-3.5">
+            <h4 class="font-semibold text-sm mb-1">{esc(r.title)}</h4>
+            <p class="text-sm text-fg-2">{esc(r.answer)}</p>
+          </div>
+        ))}
+      </div>
     </CollapsibleSection>
   )
 }

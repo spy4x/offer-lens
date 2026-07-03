@@ -1,7 +1,13 @@
 // OfferLens shared types and constants
 // All interfaces kept in sync with PRD spec
 
+export interface CustomSectionResult {
+  title: string
+  answer: string
+}
+
 export interface LandingPageAnalysis {
+  customSections?: CustomSectionResult[]
   primaryAngle: {
     type: AngleType
     confidence: number // 0-100
@@ -112,9 +118,15 @@ export interface DemoUsage {
 
 // API request/response types
 
+export interface SectionPrompt {
+  title: string
+  prompt: string
+}
+
 export interface AnalyzeRequest {
   url: string
   apiKey?: string
+  customSections?: SectionPrompt[]
 }
 
 export interface AnalyzeResponse {
@@ -125,6 +137,7 @@ export interface AnalyzeResponse {
 export interface BatchRequest {
   urls: string[] // max 50
   apiKey?: string
+  customSections?: SectionPrompt[]
 }
 
 export interface BatchResponse {
@@ -232,3 +245,26 @@ export const SUPPORTED_PROVIDERS = [
   { id: "anthropic", label: "Anthropic", baseUrl: "https://api.anthropic.com" },
   { id: "custom", label: "Custom", baseUrl: "" },
 ] as const
+
+// Custom sections types
+
+export interface CustomSection {
+  id: number
+  title: string
+  prompt: string
+  positionOrder: number
+  isActive: boolean
+  createdAt: string
+}
+
+export interface SaveSectionRequest {
+  title: string
+  prompt: string
+}
+
+export interface UpdateSectionRequest {
+  title?: string
+  prompt?: string
+  positionOrder?: number
+  isActive?: boolean
+}

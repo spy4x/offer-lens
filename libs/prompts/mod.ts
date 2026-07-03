@@ -16,6 +16,8 @@ For every page, identify:
 9. Competitive intelligence: likely traffic sources, estimated daily spend tier (low/medium/high), what competitors are likely testing (max 200 chars)
 10. Competitor counter-angles — what competitors would use against this offer (max 5, max 150 chars each)
 
+If the user asks custom questions, answer them in a "customSections" array: [{"title": "...", "answer": "..."}].
+
 CRITICAL: Be specific. Be actionable. No fluff. No generic observations. Every output must be immediately usable by a media buyer to make a go/no-go decision and start writing ads.
 
 STRICT: Return ONLY valid JSON matching the specified schema. No markdown. No extra text.
@@ -38,8 +40,11 @@ CRITICAL FIELD NAMES — use these exact camelCase keys:
   "competitorAngles": ["..."]
 }`
 
-export function buildUserPrompt(content: PageContent): string {
-  return `Analyze this landing page and return structured intelligence as JSON:
+export function buildUserPrompt(
+  content: PageContent,
+  customSections?: Array<{ title: string; prompt: string }>,
+): string {
+  let prompt = `Analyze this landing page and return structured intelligence as JSON:
 
 URL: ${content.url}
 Title: ${content.title}
@@ -67,9 +72,21 @@ OG Tags: ${JSON.stringify(content.ogTags)}
 
 Structured Data: ${
     content.structuredData ? "Present (truncated): " + content.structuredData.slice(0, 500) : "None"
+  }`
+
+  // Append custom section prompts
+  if (customSections && customSections.length > 0) {
+    prompt +=
+      `\n\nAlso answer these custom questions based on the page analysis. Include answers in the "customSections" array in your JSON response:\n`
+    for (const cs of customSections) {
+      prompt += `\n---\n${cs.title}:\n${cs.prompt}`
+    }
+    prompt +=
+      `\n\nEach custom section answer should be an object with "title" (the section title) and "answer" (your response, max 500 chars).`
   }
 
-Return the analysis as a JSON object matching this exact structure.`
+  prompt += `\n\nReturn the analysis as a JSON object matching the described structure.`
+  return prompt
 }
 
 export const ANALYSIS_JSON_SCHEMA = {
@@ -262,6 +279,18 @@ export const ANALYSIS_JSON_SCHEMA = {
         items: { type: "string", maxLength: 150 },
         minItems: 1,
         maxItems: 5,
+      },
+      customSections: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            title: { type: "string" },
+            answer: { type: "string", maxLength: 500 },
+          },
+          required: ["title", "answer"],
+          additionalProperties: false,
+        },
       },
     },
     required: [
