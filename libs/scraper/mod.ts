@@ -1,5 +1,5 @@
 // Scraper: fetches landing page HTML and extracts structured content
-import { type PageContent, FETCH_TIMEOUT_MS, BODY_TEXT_MAX_CHARS } from "@offerlens/shared"
+import { BODY_TEXT_MAX_CHARS, FETCH_TIMEOUT_MS, type PageContent } from "@offerlens/shared"
 
 /**
  * Scrape a landing page URL and return structured PageContent.
@@ -146,7 +146,8 @@ function extractHeadlines(html: string): string[] {
 
 function extractCTAs(html: string): string[] {
   const ctas: string[] = []
-  const ctaPatterns = /\b(buy|get|start|try|sign|join|claim|order|subscribe|download|register|apply|learn|discover)\b/i
+  const ctaPatterns =
+    /\b(buy|get|start|try|sign|join|claim|order|subscribe|download|register|apply|learn|discover)\b/i
 
   // Buttons
   const buttons = html.matchAll(/<button[^>]*>([\s\S]*?)<\/button>/gi)
@@ -158,7 +159,9 @@ function extractCTAs(html: string): string[] {
   }
 
   // Links with button classes or CTA patterns
-  const links = html.matchAll(/<a[^>]*class=["'][^"']*(?:cta|button|btn)[^"']*["'][^>]*>([\s\S]*?)<\/a>/gi)
+  const links = html.matchAll(
+    /<a[^>]*class=["'][^"']*(?:cta|button|btn)[^"']*["'][^>]*>([\s\S]*?)<\/a>/gi,
+  )
   for (const match of links) {
     const text = stripTags(match[1]).trim()
     if (text && text.length >= 2 && text.length <= 60 && !ctas.includes(text)) {
@@ -241,7 +244,9 @@ function extractPricing(html: string): string | null {
   if (prices.length > 0) return prices.join(" | ")
 
   // Fallback: find any text containing $ followed by digits
-  const dollarMatch = html.match(/[\$]\s*\d[\d,.]*(?:\s*\/\s*(?:mo|month|yr|year|day|week|one[- ]?time))?/gi)
+  const dollarMatch = html.match(
+    /[\$]\s*\d[\d,.]*(?:\s*\/\s*(?:mo|month|yr|year|day|week|one[- ]?time))?/gi,
+  )
   if (dollarMatch) return dollarMatch.slice(0, 5).join(" | ")
 
   return null

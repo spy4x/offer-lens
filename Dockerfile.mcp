@@ -4,14 +4,14 @@ FROM denoland/deno:alpine-2.2.0
 WORKDIR /app
 
 COPY deno.jsonc ./
-COPY apps/mcp-server/ ./apps/mcp-server/
+COPY apps/mcp/ ./apps/mcp/
 COPY libs/ ./libs/
-COPY backend/ ./backend/
+COPY apps/api/ ./apps/api/
 
-RUN deno cache apps/mcp-server/main.ts 2>/dev/null || true
+RUN deno cache apps/mcp/main.ts 2>/dev/null || true
 
 EXPOSE 3000
 
 # Default: HTTP mode on port 3000
-# Override CMD for stdio: ["run", "-A", "apps/mcp-server/main.ts"]
-CMD ["run", "-A", "apps/mcp-server/main.ts", "--http"]
+# Override CMD for stdio: ["run", "-A", "apps/mcp/main.ts"]
+CMD ["run", "-A", "apps/mcp/main.ts", "--http"]

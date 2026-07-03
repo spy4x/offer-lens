@@ -1,6 +1,6 @@
 // Backend API: usage endpoint
 import { Hono } from "hono"
-import { getDemoUsage } from "../../services/demo-usage.ts"
+import { getDemoUsage } from "../services/demo-usage.ts"
 
 export const usageRoute = new Hono()
   .get("/", async (c) => {

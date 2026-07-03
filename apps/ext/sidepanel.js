@@ -314,14 +314,20 @@ function renderResults(analysis) {
   if (analysis.hookIdeas?.length) {
     html += `
       <section class="section">
-        <h2>&#128203; HOOK IDEAS <button class="btn btn-small copy-all-btn" data-copy="${escapeAttr(analysis.hookIdeas.join("\n"))}">Copy All</button></h2>
+        <h2>&#128203; HOOK IDEAS <button class="btn btn-small copy-all-btn" data-copy="${
+      escapeAttr(analysis.hookIdeas.join("\n"))
+    }">Copy All</button></h2>
         <ol class="hook-list">
-          ${analysis.hookIdeas.map((h, i) => `
+          ${
+      analysis.hookIdeas.map((h, i) => `
             <li class="hook-item">
               <span>${escapeHtml(h)}</span>
-              <button class="btn-icon copy-btn" data-copy="${escapeAttr(h)}" title="Copy">&#128203;</button>
+              <button class="btn-icon copy-btn" data-copy="${
+        escapeAttr(h)
+      }" title="Copy">&#128203;</button>
             </li>
-          `).join("")}
+          `).join("")
+    }
         </ol>
       </section>
     `
@@ -334,8 +340,12 @@ function renderResults(analysis) {
       <div class="card">
         <p><strong>Demographics:</strong> ${escapeHtml(audience.demographics || "")}</p>
         <p><strong>Interests:</strong> ${escapeHtml(audience.interests || "")}</p>
-        <p><strong>Likely Platform:</strong> <span class="badge">${escapeHtml(audience.likelyPlatform || "")}</span></p>
-        <p class="text-muted"><strong>Notes:</strong> ${escapeHtml(audience.confidenceNotes || "")}</p>
+        <p><strong>Likely Platform:</strong> <span class="badge">${
+    escapeHtml(audience.likelyPlatform || "")
+  }</span></p>
+        <p class="text-muted"><strong>Notes:</strong> ${
+    escapeHtml(audience.confidenceNotes || "")
+  }</p>
       </div>
     </section>
   `
@@ -366,15 +376,23 @@ function renderResults(analysis) {
     <section class="section">
       <h2>&#128231; EMAIL & SMS ANGLES</h2>
       <div class="card">
-        <h4>Subject Lines <button class="btn btn-small copy-all-btn" data-copy="${escapeAttr(email.subjectLines?.join("\n") || "")}">Copy All</button></h4>
+        <h4>Subject Lines <button class="btn btn-small copy-all-btn" data-copy="${
+    escapeAttr(email.subjectLines?.join("\n") || "")
+  }">Copy All</button></h4>
         <ul>
-          ${(email.subjectLines || []).map((s) => `
-            <li class="copy-row"><span>${escapeHtml(s)}</span><button class="btn-icon copy-btn" data-copy="${escapeAttr(s)}">&#128203;</button></li>
-          `).join("")}
+          ${
+    (email.subjectLines || []).map((s) => `
+            <li class="copy-row"><span>${
+      escapeHtml(s)
+    }</span><button class="btn-icon copy-btn" data-copy="${escapeAttr(s)}">&#128203;</button></li>
+          `).join("")
+  }
         </ul>
         <h4>Email Body Angle</h4>
         <p class="text-muted">${escapeHtml(email.bodyAngle || "")}</p>
-        <h4>SMS Pitch <button class="btn-icon copy-btn" data-copy="${escapeAttr(email.smsAngle || "")}">&#128203;</button></h4>
+        <h4>SMS Pitch <button class="btn-icon copy-btn" data-copy="${
+    escapeAttr(email.smsAngle || "")
+  }">&#128203;</button></h4>
         <p class="sms-pitch">${escapeHtml(email.smsAngle || "")}</p>
       </div>
     </section>
@@ -386,11 +404,21 @@ function renderResults(analysis) {
       <section class="section">
         <h2>&#128737; TRUST SIGNALS</h2>
         <div class="card">
-          ${analysis.trustSignals.map((ts) => {
-            const icon = ts.present ? "&#9989;" : "&#10060;"
-            const strengthClass = ts.strength === "strong" ? "green" : ts.strength === "medium" ? "yellow" : "red"
-            return `<p>${icon} <strong>${escapeHtml(ts.type)}</strong> <span class="text-${strengthClass}">(${ts.strength})</span>: ${escapeHtml(ts.detail)}</p>`
-          }).join("")}
+          ${
+      analysis.trustSignals.map((ts) => {
+        const icon = ts.present ? "&#9989;" : "&#10060;"
+        const strengthClass = ts.strength === "strong"
+          ? "green"
+          : ts.strength === "medium"
+          ? "yellow"
+          : "red"
+        return `<p>${icon} <strong>${
+          escapeHtml(ts.type)
+        }</strong> <span class="text-${strengthClass}">(${ts.strength})</span>: ${
+          escapeHtml(ts.detail)
+        }</p>`
+      }).join("")
+    }
         </div>
       </section>
     `
@@ -402,10 +430,18 @@ function renderResults(analysis) {
       <section class="section">
         <h2>&#9888; CONVERSION BLOCKERS</h2>
         <div class="card">
-          ${analysis.conversionBlockers.map((b) => {
-            const sevIcon = b.severity === "high" ? "&#128308;" : b.severity === "medium" ? "&#128993;" : "&#128994;"
-            return `<div class="blocker"><p>${sevIcon} <strong>${escapeHtml(b.issue)}</strong></p><p class="text-muted">Suggestion: ${escapeHtml(b.suggestion)}</p></div>`
-          }).join("")}
+          ${
+      analysis.conversionBlockers.map((b) => {
+        const sevIcon = b.severity === "high"
+          ? "&#128308;"
+          : b.severity === "medium"
+          ? "&#128993;"
+          : "&#128994;"
+        return `<div class="blocker"><p>${sevIcon} <strong>${
+          escapeHtml(b.issue)
+        }</strong></p><p class="text-muted">Suggestion: ${escapeHtml(b.suggestion)}</p></div>`
+      }).join("")
+    }
         </div>
       </section>
     `
@@ -428,9 +464,15 @@ function renderResults(analysis) {
     <section class="section">
       <h2>&#128373; COMPETITIVE INTEL</h2>
       <div class="card">
-        <p><strong>Likely Traffic:</strong> ${escapeHtml((intel.likelyTrafficSources || []).join(", "))}</p>
-        <p><strong>Est. Daily Spend:</strong> <span class="badge">${escapeHtml(intel.estimatedDailySpend || "")}</span></p>
-        <p><strong>Competitors Testing:</strong> ${escapeHtml(intel.whatCompetitorsAreLikelyTesting || "")}</p>
+        <p><strong>Likely Traffic:</strong> ${
+    escapeHtml((intel.likelyTrafficSources || []).join(", "))
+  }</p>
+        <p><strong>Est. Daily Spend:</strong> <span class="badge">${
+    escapeHtml(intel.estimatedDailySpend || "")
+  }</span></p>
+        <p><strong>Competitors Testing:</strong> ${
+    escapeHtml(intel.whatCompetitorsAreLikelyTesting || "")
+  }</p>
       </div>
     </section>
   `
@@ -468,7 +510,9 @@ function renderResults(analysis) {
       await navigator.clipboard.writeText(text)
       const original = btn.textContent
       btn.textContent = "Copied!"
-      setTimeout(() => { btn.textContent = original }, 1500)
+      setTimeout(() => {
+        btn.textContent = original
+      }, 1500)
     })
   })
 }
@@ -480,9 +524,21 @@ function renderAdVariants(variants, platform) {
       (v, i) => `
     <div class="variant">
       <p class="variant-label">Variant ${i + 1}</p>
-      <p><strong>Headline:</strong> ${escapeHtml(v.headline)} <button class="btn-icon copy-btn" data-copy="${escapeAttr(v.headline)}">&#128203;</button></p>
-      <p><strong>Text:</strong> ${escapeHtml(v.primaryText)} <button class="btn-icon copy-btn" data-copy="${escapeAttr(v.primaryText)}">&#128203;</button></p>
-      <p><strong>CTA:</strong> <span class="badge">${escapeHtml(v.cta)}</span> <button class="btn-icon copy-btn" data-copy="${escapeAttr(v.cta)}">&#128203;</button></p>
+      <p><strong>Headline:</strong> ${
+        escapeHtml(v.headline)
+      } <button class="btn-icon copy-btn" data-copy="${
+        escapeAttr(v.headline)
+      }">&#128203;</button></p>
+      <p><strong>Text:</strong> ${
+        escapeHtml(v.primaryText)
+      } <button class="btn-icon copy-btn" data-copy="${
+        escapeAttr(v.primaryText)
+      }">&#128203;</button></p>
+      <p><strong>CTA:</strong> <span class="badge">${
+        escapeHtml(v.cta)
+      }</span> <button class="btn-icon copy-btn" data-copy="${
+        escapeAttr(v.cta)
+      }">&#128203;</button></p>
     </div>
   `,
     )
@@ -496,9 +552,19 @@ function renderNativeVariants(variants) {
       (v, i) => `
     <div class="variant">
       <p class="variant-label">Variant ${i + 1}</p>
-      <p><strong>Headline:</strong> ${escapeHtml(v.headline)} <button class="btn-icon copy-btn" data-copy="${escapeAttr(v.headline)}">&#128203;</button></p>
-      <p><strong>Body:</strong> ${escapeHtml(v.body)} <button class="btn-icon copy-btn" data-copy="${escapeAttr(v.body)}">&#128203;</button></p>
-      <p><strong>CTA:</strong> <span class="badge">${escapeHtml(v.cta)}</span> <button class="btn-icon copy-btn" data-copy="${escapeAttr(v.cta)}">&#128203;</button></p>
+      <p><strong>Headline:</strong> ${
+        escapeHtml(v.headline)
+      } <button class="btn-icon copy-btn" data-copy="${
+        escapeAttr(v.headline)
+      }">&#128203;</button></p>
+      <p><strong>Body:</strong> ${
+        escapeHtml(v.body)
+      } <button class="btn-icon copy-btn" data-copy="${escapeAttr(v.body)}">&#128203;</button></p>
+      <p><strong>CTA:</strong> <span class="badge">${
+        escapeHtml(v.cta)
+      }</span> <button class="btn-icon copy-btn" data-copy="${
+        escapeAttr(v.cta)
+      }">&#128203;</button></p>
     </div>
   `,
     )
@@ -519,7 +585,9 @@ function renderBatchResults(data) {
       html += `
         <div class="batch-item">
           <p class="batch-url">${escapeHtml(r.url)}</p>
-          <p><span class="badge badge-angle">${escapeHtml(a?.primaryAngle?.type || "unknown")}</span>
+          <p><span class="badge badge-angle">${
+        escapeHtml(a?.primaryAngle?.type || "unknown")
+      }</span>
           <span class="confidence">${a?.primaryAngle?.confidence ?? 0}%</span></p>
           <p class="text-muted">${escapeHtml(a?.hookIdeas?.[0] || "")}</p>
         </div>

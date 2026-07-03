@@ -54,7 +54,10 @@ services:
       - default
     # Internal MCP service — NOT exposed via Traefik
     healthcheck:
-      test: ["CMD-SHELL", "deno eval 'const r = await fetch(\"http://localhost:3000/health\"); Deno.exit(r.ok ? 0 : 1)' || exit 1"]
+      test: [
+        "CMD-SHELL",
+        "deno eval 'const r = await fetch(\"http://localhost:3000/health\"); Deno.exit(r.ok ? 0 : 1)' || exit 1",
+      ]
       interval: 30s
       timeout: 10s
       retries: 3

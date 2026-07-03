@@ -1,5 +1,5 @@
 // Demo usage tracking service
-import { type DemoUsage, DEMO_LIMIT } from "@offerlens/shared"
+import { DEMO_LIMIT, type DemoUsage } from "@offerlens/shared"
 import { getDb } from "@offerlens/db"
 import { Config } from "./config.ts"
 

@@ -8,7 +8,7 @@
     "@offerlens/prompts": "./libs/prompts/mod.ts",
     "@offerlens/analyzer": "./libs/analyzer/mod.ts",
     "@offerlens/db": "./libs/db/mod.ts",
-    "@offerlens/backend-services": "./backend/services/mod.ts",
+    "@offerlens/backend-services": "./apps/api/services/mod.ts",
 
     "hono": "jsr:@hono/hono@^4.7",
     "hono/cors": "jsr:@hono/hono@^4.7/cors",
@@ -25,8 +25,8 @@
     "$fresh/": "jsr:@fresh/core@^2.0/"
   },
   "tasks": {
-    "dev": "deno run -A --env-file=.env --watch=libs/,backend/,main.ts main.ts",
-    "mcp:dev": "deno run -A --env-file=.env apps/mcp-server/main.ts",
+    "dev": "deno run -A --env-file=.env --watch=libs/,apps/api/,main.ts main.ts",
+    "mcp:dev": "deno run -A --env-file=.env apps/mcp/main.ts",
     "db:migrate": "deno run -A --env-file=.env libs/db/migrate.ts",
     "check": "deno fmt --check && deno lint && deno check main.ts",
     "fix": "deno fmt && deno lint --fix",
