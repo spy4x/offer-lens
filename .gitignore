@@ -18,3 +18,4 @@ deno.lock
 
 # Build output
 dist/
+apps/ext/build/

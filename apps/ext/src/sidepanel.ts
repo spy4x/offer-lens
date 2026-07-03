@@ -1,7 +1,103 @@
 // OfferLens Side Panel — Main Logic
 // Handles URL fetching, API calls, rendering, copy buttons, settings
 
-let state = {
+// --- Types ---
+
+interface DemoUsage {
+  used: number
+  limit: number
+  remaining: number
+}
+
+interface Analysis {
+  primaryAngle?: {
+    type?: string
+    confidence?: number
+    explanation?: string
+  }
+  hookIdeas?: string[]
+  targetAudience?: {
+    demographics?: string
+    interests?: string
+    likelyPlatform?: string
+    confidenceNotes?: string
+  }
+  adCopy?: AdCopy
+  emailAngle?: {
+    subjectLines?: string[]
+    bodyAngle?: string
+    smsAngle?: string
+  }
+  trustSignals?: TrustSignal[]
+  conversionBlockers?: ConversionBlocker[]
+  abTestIdeas?: string[]
+  competitiveIntel?: {
+    likelyTrafficSources?: string[]
+    estimatedDailySpend?: string
+    whatCompetitorsAreLikelyTesting?: string
+  }
+  competitorAngles?: string[]
+}
+
+interface AdCopy {
+  facebook?: AdVariant[]
+  google?: AdVariant[]
+  native?: NativeVariant[]
+}
+
+interface AdVariant {
+  headline: string
+  primaryText: string
+  cta: string
+}
+
+interface NativeVariant {
+  headline: string
+  body: string
+  cta: string
+}
+
+interface TrustSignal {
+  type: string
+  present: boolean
+  strength: string
+  detail: string
+}
+
+interface ConversionBlocker {
+  issue: string
+  severity: string
+  suggestion: string
+}
+
+interface BatchResult {
+  results?: Array<{
+    url: string
+    analysis?: Analysis
+  }>
+  errors?: Array<{
+    url: string
+    error: string
+  }>
+  demoUsage?: DemoUsage
+}
+
+interface AppState {
+  currentUrl: string
+  backendUrl: string
+  apiKey: string
+  useDemoKey: boolean
+  sessionId: string
+  isAnalyzing: boolean
+  results: Analysis | null
+  batchResults: BatchResult | null
+  isBatchMode: boolean
+  demoUsage: DemoUsage | null
+}
+
+// --- State ---
+
+const state: AppState = {
   currentUrl: "",
   backendUrl: "http://localhost:8000",
   apiKey: "",
@@ -16,7 +112,7 @@ let state = {
 
 // --- Initialization ---
 
-async function init() {
+async function init(): Promise<void> {
   // Load settings from storage
   const stored = await chrome.storage.local.get([
     "sessionId",
@@ -46,24 +142,26 @@ async function init() {
   updateDemoCounter()
 }
 
-async function getCurrentUrl() {
+async function getCurrentUrl(): Promise<void> {
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
     if (tab?.id) {
-      const response = await chrome.tabs.sendMessage(tab.id, { type: "GET_CURRENT_URL" })
+      const response = await chrome.tabs.sendMessage<{ url: string }>(tab.id, {
+        type: "GET_CURRENT_URL",
+      })
       if (response?.url) {
         state.currentUrl = response.url
-        document.getElementById("currentUrl").textContent = state.currentUrl
+        getEl("currentUrl").textContent = state.currentUrl
       }
     }
   } catch {
     // Content script might not be injected on chrome:// pages etc.
-    document.getElementById("currentUrl").textContent = "Cannot read URL on this page"
+    getEl("currentUrl").textContent = "Cannot read URL on this page"
     state.currentUrl = ""
   }
 }
 
-async function loadDemoUsage() {
+async function loadDemoUsage(): Promise<void> {
   try {
     const res = await fetch(`${state.backendUrl}/api/usage`, {
       headers: { "X-Session-Id": state.sessionId },
@@ -78,41 +176,47 @@ async function loadDemoUsage() {
   }
 }
 
+// --- DOM helpers ---
+
+function getEl<T extends HTMLElement>(id: string): T {
+  return document.getElementById(id) as T
+}
+
 // --- Event Listeners ---
 
-function setupEventListeners() {
-  document.getElementById("analyzeBtn").addEventListener("click", () => analyzeSingle())
-  document.getElementById("batchAnalyzeBtn").addEventListener("click", () => analyzeBatch())
-  document.getElementById("settingsBtn").addEventListener("click", toggleSettings)
-  document.getElementById("saveSettingsBtn").addEventListener("click", saveSettings)
-  document.getElementById("closeSettingsBtn").addEventListener("click", () => toggleSettings(false))
-  document.getElementById("singleModeTab").addEventListener("click", () => switchMode(false))
-  document.getElementById("batchModeTab").addEventListener("click", () => switchMode(true))
-  document.getElementById("retryBtn").addEventListener("click", () => {
+function setupEventListeners(): void {
+  getEl("analyzeBtn").addEventListener("click", () => analyzeSingle())
+  getEl("batchAnalyzeBtn").addEventListener("click", () => analyzeBatch())
+  getEl("settingsBtn").addEventListener("click", () => toggleSettings())
+  getEl("saveSettingsBtn").addEventListener("click", () => saveSettings())
+  getEl("closeSettingsBtn").addEventListener("click", () => toggleSettings(false))
+  getEl("singleModeTab").addEventListener("click", () => switchMode(false))
+  getEl("batchModeTab").addEventListener("click", () => switchMode(true))
+  getEl("retryBtn").addEventListener("click", () => {
     if (state.isBatchMode) analyzeBatch()
     else analyzeSingle()
   })
-  document.getElementById("useDemoKeyToggle").addEventListener("change", (e) => {
-    state.useDemoKey = e.target.checked
+  getEl<HTMLInputElement>("useDemoKeyToggle").addEventListener("change", (e) => {
+    state.useDemoKey = (e.target as HTMLInputElement).checked
     updateSettingsUI()
   })
 }
 
 // --- Mode Switching ---
 
-function switchMode(batch) {
+function switchMode(batch: boolean): void {
   state.isBatchMode = batch
-  document.getElementById("singleMode").classList.toggle("hidden", batch)
-  document.getElementById("batchMode").classList.toggle("hidden", !batch)
-  document.getElementById("singleModeTab").classList.toggle("active", !batch)
-  document.getElementById("batchModeTab").classList.toggle("active", batch)
-  document.getElementById("results").classList.add("hidden")
+  getEl("singleMode").classList.toggle("hidden", batch)
+  getEl("batchMode").classList.toggle("hidden", !batch)
+  getEl("singleModeTab").classList.toggle("active", !batch)
+  getEl("batchModeTab").classList.toggle("active", batch)
+  getEl("results").classList.add("hidden")
 }
 
 // --- Settings ---
 
-function toggleSettings(show) {
-  const panel = document.getElementById("settingsPanel")
+function toggleSettings(show?: boolean): void {
+  const panel = getEl("settingsPanel")
   if (show === undefined) {
     panel.classList.toggle("hidden")
   } else {
@@ -120,16 +224,16 @@ function toggleSettings(show) {
   }
 }
 
-function updateSettingsUI() {
-  document.getElementById("apiKeyInput").value = state.apiKey
-  document.getElementById("useDemoKeyToggle").checked = state.useDemoKey
-  document.getElementById("backendUrlInput").value = state.backendUrl
+function updateSettingsUI(): void {
+  getEl<HTMLInputElement>("apiKeyInput").value = state.apiKey
+  getEl<HTMLInputElement>("useDemoKeyToggle").checked = state.useDemoKey
+  getEl<HTMLInputElement>("backendUrlInput").value = state.backendUrl
 }
 
-async function saveSettings() {
-  state.apiKey = document.getElementById("apiKeyInput").value.trim()
-  state.useDemoKey = document.getElementById("useDemoKeyToggle").checked
-  state.backendUrl = document.getElementById("backendUrlInput").value.trim()
+async function saveSettings(): Promise<void> {
+  state.apiKey = getEl<HTMLInputElement>("apiKeyInput").value.trim()
+  state.useDemoKey = getEl<HTMLInputElement>("useDemoKeyToggle").checked
+  state.backendUrl = getEl<HTMLInputElement>("backendUrlInput").value.trim()
 
   await chrome.storage.local.set({
     apiKey: state.apiKey,
@@ -143,7 +247,7 @@ async function saveSettings() {
 
 // --- Analysis ---
 
-async function analyzeSingle() {
+async function analyzeSingle(): Promise<void> {
   if (state.isAnalyzing) return
   const url = state.currentUrl
   if (!url) {
@@ -153,9 +257,9 @@ async function analyzeSingle() {
   await runAnalysis(url)
 }
 
-async function analyzeBatch() {
+async function analyzeBatch(): Promise<void> {
   if (state.isAnalyzing) return
-  const urlsText = document.getElementById("batchUrls").value
+  const urlsText = getEl<HTMLTextAreaElement>("batchUrls").value
   const urls = urlsText.split("\n").map((u) => u.trim()).filter(Boolean)
   if (urls.length === 0) {
     showError("Enter at least one URL.")
@@ -168,14 +272,14 @@ async function analyzeBatch() {
   await runBatchAnalysis(urls)
 }
 
-async function runAnalysis(url) {
+async function runAnalysis(url: string): Promise<void> {
   state.isAnalyzing = true
   showLoading(true)
   hideError()
   hideResults()
 
   try {
-    const body = { url }
+    const body: Record<string, string> = { url }
     if (!state.useDemoKey && state.apiKey) {
       body.apiKey = state.apiKey
     }
@@ -194,27 +298,27 @@ async function runAnalysis(url) {
       throw new Error(err.error || `HTTP ${res.status}`)
     }
 
-    const data = await res.json()
+    const data = await res.json() as { analysis: Analysis; demoUsage?: DemoUsage }
     state.results = data.analysis
     state.demoUsage = data.demoUsage || state.demoUsage
     updateDemoCounter()
     renderResults(data.analysis)
   } catch (err) {
-    showError(err.message)
+    showError((err as Error).message)
   } finally {
     state.isAnalyzing = false
     showLoading(false)
   }
 }
 
-async function runBatchAnalysis(urls) {
+async function runBatchAnalysis(urls: string[]): Promise<void> {
   state.isAnalyzing = true
   showLoading(true)
   hideError()
   hideResults()
 
   try {
-    const body = { urls }
+    const body: Record<string, string | string[]> = { urls }
     if (!state.useDemoKey && state.apiKey) {
       body.apiKey = state.apiKey
     }
@@ -233,13 +337,13 @@ async function runBatchAnalysis(urls) {
       throw new Error(err.error || `HTTP ${res.status}`)
     }
 
-    const data = await res.json()
+    const data = await res.json() as BatchResult
     state.batchResults = data
     state.demoUsage = data.demoUsage || state.demoUsage
     updateDemoCounter()
     renderBatchResults(data)
   } catch (err) {
-    showError(err.message)
+    showError((err as Error).message)
   } finally {
     state.isAnalyzing = false
     showLoading(false)
@@ -248,25 +352,25 @@ async function runBatchAnalysis(urls) {
 
 // --- UI State Helpers ---
 
-function showLoading(show) {
-  document.getElementById("loadingState").classList.toggle("hidden", !show)
+function showLoading(show: boolean): void {
+  getEl("loadingState").classList.toggle("hidden", !show)
 }
 
-function hideError() {
-  document.getElementById("errorState").classList.add("hidden")
+function hideError(): void {
+  getEl("errorState").classList.add("hidden")
 }
 
-function showError(message) {
-  document.getElementById("errorMessage").textContent = message
-  document.getElementById("errorState").classList.remove("hidden")
+function showError(message: string): void {
+  getEl("errorMessage").textContent = message
+  getEl("errorState").classList.remove("hidden")
 }
 
-function hideResults() {
-  document.getElementById("results").classList.add("hidden")
+function hideResults(): void {
+  getEl("results").classList.add("hidden")
 }
 
-function updateDemoCounter() {
-  const el = document.getElementById("demoCounter")
+function updateDemoCounter(): void {
+  const el = getEl("demoCounter")
   if (state.demoUsage) {
     el.textContent = `📊 ${state.demoUsage.used}/${state.demoUsage.limit}`
     el.title = `${state.demoUsage.remaining} demo requests remaining`
@@ -285,8 +389,8 @@ function updateDemoCounter() {
 
 // --- Render Results ---
 
-function renderResults(analysis) {
-  const resultsEl = document.getElementById("results")
+function renderResults(analysis: Analysis): void {
+  const resultsEl = getEl("results")
   if (!analysis) return
 
   const primaryAngle = analysis.primaryAngle || {}
@@ -319,7 +423,7 @@ function renderResults(analysis) {
     }">Copy All</button></h2>
         <ol class="hook-list">
           ${
-      analysis.hookIdeas.map((h, i) => `
+      analysis.hookIdeas.map((h, _i) => `
             <li class="hook-item">
               <span>${escapeHtml(h)}</span>
               <button class="btn-icon copy-btn" data-copy="${
@@ -495,18 +599,18 @@ function renderResults(analysis) {
   // Setup tab switching
   resultsEl.querySelectorAll(".ad-tab").forEach((btn) => {
     btn.addEventListener("click", () => {
-      const tab = btn.dataset.tab
+      const tab = (btn as HTMLElement).dataset.tab
       resultsEl.querySelectorAll(".ad-tab").forEach((b) => b.classList.remove("active"))
       btn.classList.add("active")
       resultsEl.querySelectorAll(".tab-content").forEach((c) => c.classList.add("hidden"))
-      document.getElementById(`ad-${tab}`)?.classList.remove("hidden")
+      getEl(`ad-${tab}`)?.classList.remove("hidden")
     })
   })
 
   // Setup copy buttons
-  resultsEl.querySelectorAll(".copy-btn, .copy-all-btn").forEach((btn) => {
+  resultsEl.querySelectorAll<HTMLElement>(".copy-btn, .copy-all-btn").forEach((btn) => {
     btn.addEventListener("click", async () => {
-      const text = btn.dataset.copy
+      const text = (btn as HTMLElement).dataset.copy || ""
       await navigator.clipboard.writeText(text)
       const original = btn.textContent
       btn.textContent = "Copied!"
@@ -517,7 +621,7 @@ function renderResults(analysis) {
   })
 }
 
-function renderAdVariants(variants, platform) {
+function renderAdVariants(variants: AdVariant[], _platform: string): string {
   if (!variants.length) return "<p>No variants</p>"
   return variants
     .map(
@@ -545,7 +649,7 @@ function renderAdVariants(variants, platform) {
     .join("")
 }
 
-function renderNativeVariants(variants) {
+function renderNativeVariants(variants: NativeVariant[]): string {
   if (!variants.length) return "<p>No variants</p>"
   return variants
     .map(
@@ -571,8 +675,8 @@ function renderNativeVariants(variants) {
     .join("")
 }
 
-function renderBatchResults(data) {
-  const resultsEl = document.getElementById("results")
+function renderBatchResults(data: BatchResult): void {
+  const resultsEl = getEl("results")
 
   let html = "<section class='section'><h2>&#128230; BATCH RESULTS</h2>"
 
@@ -613,7 +717,7 @@ function renderBatchResults(data) {
 
 // --- Helpers ---
 
-function escapeHtml(str) {
+function escapeHtml(str: string | null | undefined): string {
   if (!str) return ""
   return String(str)
     .replace(/&/g, "&amp;")
@@ -622,7 +726,7 @@ function escapeHtml(str) {
     .replace(/"/g, "&quot;")
 }
 
-function escapeAttr(str) {
+function escapeAttr(str: string | null | undefined): string {
   if (!str) return ""
   return String(str).replace(/"/g, "&quot;").replace(/`/g, "&#96;")
 }
