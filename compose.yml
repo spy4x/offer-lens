@@ -18,6 +18,7 @@ services:
       - DB_NAME=${OFFERLENS_DB_NAME:-offerlens}
       - DB_USER=${OFFERLENS_DB_USER:-offerlens}
       - DB_PASS=${OFFERLENS_DB_PASS}
+      - ENCRYPTION_KEY=${OFFERLENS_ENCRYPTION_KEY}
     networks:
       - proxy
       - default

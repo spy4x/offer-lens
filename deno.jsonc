@@ -9,6 +9,7 @@
     "@offerlens/analyzer": "./libs/analyzer/mod.ts",
     "@offerlens/db": "./libs/db/mod.ts",
     "@offerlens/auth": "./libs/auth/mod.ts",
+    "@offerlens/encrypt": "./libs/encrypt/mod.ts",
     "@offerlens/backend-services": "./apps/api/services/mod.ts",
 
     "hono": "jsr:@hono/hono@^4.7",

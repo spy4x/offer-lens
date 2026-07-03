@@ -1,10 +1,12 @@
 // Backend API: batch analyze endpoint
+// BYOK: auto-uses user's saved key when available
 import { Hono } from "hono"
 import type { BatchRequest, BatchResponse, BatchResult } from "@offerlens/shared"
 import { MAX_BATCH_URLS } from "@offerlens/shared"
 import { analyzeLandingPage } from "@offerlens/analyzer"
 import { Config } from "@offerlens/backend-services"
 import { getDb } from "@offerlens/db"
+import { decrypt } from "@offerlens/encrypt"
 import { checkDemoUsage, getDemoUsage, recordDemoUsage } from "../services/demo-usage.ts"
 import { authenticateRequest } from "../services/auth.ts"
 
@@ -56,9 +58,42 @@ export const batchRoute = new Hono()
       )
     }
 
-    // Check demo usage
-    const { canProceed, usage } = await checkDemoUsage(sessionId || "", body.apiKey, userId)
-    if (!canProceed && !body.apiKey) {
+    // Resolve effective API key: body > saved key > demo key
+    let effectiveApiKey = body.apiKey || ""
+    let usedSavedKey = false
+    let apiBase = Config.apiBase
+    let model = Config.model
+
+    if (!effectiveApiKey && userId) {
+      const db = getDb()
+      const activeProviders = await db.getActiveApiProviders(userId)
+      for (const provider of activeProviders) {
+        const keyData = await db.getApiKeyEncrypted(userId, provider)
+        if (keyData) {
+          try {
+            effectiveApiKey = await decrypt(keyData.key_encrypted)
+            if (keyData.base_url) apiBase = keyData.base_url
+            if (keyData.model) model = keyData.model
+            usedSavedKey = true
+            break
+          } catch {
+            continue
+          }
+        }
+      }
+    }
+
+    if (!effectiveApiKey) {
+      effectiveApiKey = Config.demoApiKey
+    }
+
+    // Check demo usage (skipped if user provided key or saved key is used)
+    const { canProceed, usage } = await checkDemoUsage(
+      sessionId || "",
+      usedSavedKey || !!body.apiKey ? "byok" : undefined,
+      userId,
+    )
+    if (!canProceed && !usedSavedKey && !body.apiKey) {
       if (usage.limit === 0) {
         return c.json(
           { error: "Demo key not configured on server. Provide your own API key." },
@@ -72,9 +107,10 @@ export const batchRoute = new Hono()
     }
 
     // Calculate how many we can process
-    const urlsToProcess = body.apiKey ? body.urls : body.urls.slice(0, usage.remaining)
+    const urlsToProcess = (usedSavedKey || !!body.apiKey)
+      ? body.urls
+      : body.urls.slice(0, usage.remaining)
 
-    const effectiveApiKey = body.apiKey || Config.demoApiKey
     const concurrency = Config.batchConcurrency
 
     // Process in batches
@@ -86,8 +122,8 @@ export const batchRoute = new Hono()
       const batchPromises = batch.map(async (url): Promise<BatchResult> => {
         const analysis = await analyzeLandingPage(url, {
           apiKey: effectiveApiKey,
-          apiBase: Config.apiBase,
-          model: Config.model,
+          apiBase,
+          model,
         })
         return { url, analysis }
       })
@@ -112,7 +148,7 @@ export const batchRoute = new Hono()
     }
 
     // Record usage (only for demo key)
-    if (!body.apiKey) {
+    if (!usedSavedKey && !body.apiKey) {
       await recordDemoUsage(sessionId || "", "batch", urlsToProcess.length, userId)
     }
 
@@ -131,7 +167,9 @@ export const batchRoute = new Hono()
       }
     }
 
-    const demoUsage = body.apiKey ? undefined : await getDemoUsage(sessionId || "", userId)
+    const demoUsage = (usedSavedKey || !!body.apiKey)
+      ? undefined
+      : await getDemoUsage(sessionId || "", userId)
 
     const response: BatchResponse = { results, errors, demoUsage }
     return c.json(response)

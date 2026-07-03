@@ -200,3 +200,35 @@ export const TRUST_SIGNAL_TYPES: TrustSignalType[] = [
 export const PLATFORMS: Platform[] = ["facebook", "google", "native", "tiktok", "youtube", "all"]
 
 export const SPEND_TIERS: SpendTier[] = ["low", "medium", "high"]
+
+// BYOK types
+
+export interface UserApiKey {
+  id: number
+  provider: string
+  baseUrl: string
+  model: string
+  keyHint: string // last 4 chars, rest masked
+  isActive: boolean
+  createdAt: string
+}
+
+export interface SaveKeyRequest {
+  provider: string
+  apiKey: string
+  baseUrl?: string
+  model?: string
+}
+
+export interface TestKeyResult {
+  success: boolean
+  model?: string
+  error?: string
+}
+
+export const SUPPORTED_PROVIDERS = [
+  { id: "openai", label: "OpenAI", baseUrl: "https://api.openai.com" },
+  { id: "deepseek", label: "DeepSeek", baseUrl: "https://api.deepseek.com" },
+  { id: "anthropic", label: "Anthropic", baseUrl: "https://api.anthropic.com" },
+  { id: "custom", label: "Custom", baseUrl: "" },
+] as const
