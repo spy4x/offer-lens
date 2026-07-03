@@ -57,6 +57,16 @@ const TOOLS = [
   },
 ]
 
+// MCP response headers helper
+function mcpHeaders(extra: Record<string, string> = {}): Record<string, string> {
+  return {
+    "Content-Type": "application/json",
+    "MCP-Version": PROTOCOL_VERSION,
+    "Mcp-Session-Id": SESSION_ID,
+    ...extra,
+  }
+}
+
 // --- Stdio mode: MCP SDK ---
 if (!useHttp) {
   const server = new Server({ name: SERVER_NAME, version: SERVER_VERSION }, {
@@ -173,7 +183,7 @@ if (!useHttp) {
               id: null,
               error: { code: -32700, message: "Parse error: empty body" },
             }),
-            { headers: { "Content-Type": "application/json" } },
+            { headers: mcpHeaders() },
           )
         }
 
@@ -195,7 +205,7 @@ if (!useHttp) {
                 serverInfo: { name: SERVER_NAME, version: SERVER_VERSION },
               },
             }),
-            { headers: { "Content-Type": "application/json" } },
+            { headers: mcpHeaders() },
           )
         }
 
@@ -210,7 +220,7 @@ if (!useHttp) {
         if (msg.method === "tools/list") {
           return new Response(
             JSON.stringify({ jsonrpc: "2.0", id: msgId, result: { tools: TOOLS } }),
-            { headers: { "Content-Type": "application/json" } },
+            { headers: mcpHeaders() },
           )
         }
 
@@ -242,7 +252,7 @@ if (!useHttp) {
                 id: msgId,
                 error: { code: -32601, message: `Unknown tool: ${toolName}` },
               }),
-              { headers: { "Content-Type": "application/json" } },
+              { headers: mcpHeaders() },
             )
           }
 
@@ -254,7 +264,7 @@ if (!useHttp) {
                 content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
               },
             }),
-            { headers: { "Content-Type": "application/json" } },
+            { headers: mcpHeaders() },
           )
         }
 
@@ -265,7 +275,7 @@ if (!useHttp) {
             id: msgId,
             error: { code: -32601, message: `Method not found: ${msg.method}` },
           }),
-          { headers: { "Content-Type": "application/json" } },
+          { headers: mcpHeaders() },
         )
       } catch (err) {
         const errMsg = err instanceof Error ? err.message : String(err)
@@ -275,7 +285,7 @@ if (!useHttp) {
             id: null,
             error: { code: -32603, message: errMsg },
           }),
-          { status: 500, headers: { "Content-Type": "application/json" } },
+          { status: 500, headers: mcpHeaders() },
         )
       }
     }
