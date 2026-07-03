@@ -124,6 +124,7 @@ export const batchRoute = new Hono()
           apiKey: effectiveApiKey,
           apiBase,
           model,
+          customSections: body.customSections,
         })
         return { url, analysis }
       })

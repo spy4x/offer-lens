@@ -98,6 +98,7 @@ export const analyzeRoute = new Hono()
         apiKey: effectiveApiKey,
         apiBase,
         model,
+        customSections: body.customSections,
       })
 
       // Record usage only when demo key used

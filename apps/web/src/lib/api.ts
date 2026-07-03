@@ -29,6 +29,7 @@ interface BatchResult {
 
 // Replicated from shared types for SPA self-containment
 export interface LandingPageAnalysis {
+  customSections?: Array<{ title: string; answer: string }>
   primaryAngle: { type: string; explanation: string; confidence: number }
   hookIdeas: string[]
   targetAudience: {
@@ -131,17 +132,25 @@ export function fetchUsage(): Promise<DemoUsage> {
   return apiFetch<DemoUsage>("/api/usage")
 }
 
-export function analyzeSingle(url: string): Promise<AnalyzeResponse> {
-  const body: Record<string, string> = { url }
+export function analyzeSingle(
+  url: string,
+  customSections?: Array<{ title: string; prompt: string }>,
+): Promise<AnalyzeResponse> {
+  const body: Record<string, unknown> = { url }
   const apiKey = getApiKey()
   if (apiKey) body.apiKey = apiKey
+  if (customSections && customSections.length > 0) body.customSections = customSections
   return apiFetch<AnalyzeResponse>("/api/analyze", body)
 }
 
-export function analyzeBatch(urls: string[]): Promise<BatchResponse> {
-  const body: Record<string, string[] | string> = { urls }
+export function analyzeBatch(
+  urls: string[],
+  customSections?: Array<{ title: string; prompt: string }>,
+): Promise<BatchResponse> {
+  const body: Record<string, unknown> = { urls }
   const apiKey = getApiKey()
   if (apiKey) body.apiKey = apiKey
+  if (customSections && customSections.length > 0) body.customSections = customSections
   return apiFetch<BatchResponse>("/api/batch", body)
 }
 
@@ -243,4 +252,60 @@ export async function deleteKey(provider: string): Promise<{ success: boolean }>
 
 export async function testKey(provider: string): Promise<TestKeyResult> {
   return apiFetch(`/api/keys/test?provider=${encodeURIComponent(provider)}`)
+}
+
+// --- Custom Sections API ---
+
+export interface CustomSection {
+  id: number
+  title: string
+  prompt: string
+  positionOrder: number
+  isActive: boolean
+  createdAt: string
+}
+
+export async function fetchSections(): Promise<{ sections: CustomSection[] }> {
+  return apiFetch("/api/sections")
+}
+
+export async function createSection(data: {
+  title: string
+  prompt: string
+}): Promise<CustomSection> {
+  return apiFetch("/api/sections", data)
+}
+
+export async function updateSection(
+  id: number,
+  data: { title?: string; prompt?: string },
+): Promise<CustomSection> {
+  const headers: Record<string, string> = { "Content-Type": "application/json" }
+  const token = authToken.value
+  if (token) headers["Authorization"] = `Bearer ${token}`
+  const res = await fetch(`/api/sections/${id}`, {
+    method: "PUT",
+    headers,
+    body: JSON.stringify(data),
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: `HTTP ${res.status}` }))
+    throw new Error(err.error || `HTTP ${res.status}`)
+  }
+  return res.json()
+}
+
+export async function deleteSection(id: number): Promise<{ success: boolean }> {
+  const headers: Record<string, string> = {}
+  const token = authToken.value
+  if (token) headers["Authorization"] = `Bearer ${token}`
+  const res = await fetch(`/api/sections/${id}`, {
+    method: "DELETE",
+    headers,
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: `HTTP ${res.status}` }))
+    throw new Error(err.error || `HTTP ${res.status}`)
+  }
+  return res.json()
 }

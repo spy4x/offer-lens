@@ -1,6 +1,12 @@
 import { useEffect, useState } from "preact/hooks"
-import { analyzeSingle, fetchUsage, type LandingPageAnalysis } from "../lib/api.ts"
-import { demoUsage, errorMessage, isLoading } from "../lib/state.ts"
+import {
+  analyzeSingle,
+  type CustomSection,
+  fetchSections,
+  fetchUsage,
+  type LandingPageAnalysis,
+} from "../lib/api.ts"
+import { authToken, demoUsage, errorMessage, isLoading } from "../lib/state.ts"
 import { AnalysisResults } from "../components/AnalysisResults.tsx"
 import { LoadingSkeleton } from "../components/LoadingSkeleton.tsx"
 
@@ -28,11 +34,21 @@ export function HomePage({ preloadedUrl }: Props) {
   const [analysis, setAnalysis] = useState<LandingPageAnalysis | null>(null)
   const [validationError, setValidationError] = useState("")
   const [showValidation, setShowValidation] = useState(false)
+  const [customSections, setCustomSections] = useState<CustomSection[]>([])
+  const [selectedSections, setSelectedSections] = useState<Set<number>>(new Set())
 
   useEffect(() => {
     fetchUsage().then((u) => {
       demoUsage.value = u
     }).catch(() => {})
+    // Load custom sections if authenticated
+    if (authToken.value) {
+      fetchSections().then((data) => {
+        setCustomSections(data.sections)
+        // Auto-select all active sections
+        setSelectedSections(new Set(data.sections.map((s) => s.id)))
+      }).catch(() => {})
+    }
   }, [])
 
   useEffect(() => {
@@ -50,6 +66,13 @@ export function HomePage({ preloadedUrl }: Props) {
     addEventListener("keydown", handler)
     return () => removeEventListener("keydown", handler)
   }, [])
+
+  function toggleSection(id: number) {
+    const next = new Set(selectedSections)
+    if (next.has(id)) next.delete(id)
+    else next.add(id)
+    setSelectedSections(next)
+  }
 
   const handleSubmit = async (e: Event) => {
     e.preventDefault()
@@ -80,8 +103,16 @@ export function HomePage({ preloadedUrl }: Props) {
     errorMessage.value = ""
     setAnalysis(null)
 
+    // Get selected section prompts
+    const activeSections = customSections
+      .filter((s) => selectedSections.has(s.id))
+      .map((s) => ({ title: s.title, prompt: s.prompt }))
+
     try {
-      const data = await analyzeSingle(targetUrl)
+      const data = await analyzeSingle(
+        targetUrl,
+        activeSections.length > 0 ? activeSections : undefined,
+      )
       if (data.demoUsage) demoUsage.value = data.demoUsage
       setAnalysis(data.analysis)
     } catch (err) {
@@ -138,6 +169,31 @@ export function HomePage({ preloadedUrl }: Props) {
                 🔍 Analyze
               </button>
             </div>
+            {customSections.length > 0 && (
+              <div class="mt-3 text-left">
+                <details class="text-xs">
+                  <summary class="cursor-pointer text-fg-2 hover:text-fg select-none">
+                    Custom sections ({selectedSections.size}/{customSections.length} selected)
+                  </summary>
+                  <div class="mt-2 flex flex-wrap gap-2">
+                    {customSections.map((s) => (
+                      <label
+                        key={s.id}
+                        class="flex items-center gap-1.5 px-2 py-1 bg-card border border-border rounded-lg cursor-pointer hover:bg-border select-none"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedSections.has(s.id)}
+                          onChange={() => toggleSection(s.id)}
+                          class="accent-accent"
+                        />
+                        <span>{s.title}</span>
+                      </label>
+                    ))}
+                  </div>
+                </details>
+              </div>
+            )}
           </form>
         )}
       </section>

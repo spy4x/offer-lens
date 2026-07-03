@@ -11,6 +11,7 @@ export interface AnalyzeOptions {
   model?: string
   apiBase?: string
   maxRetries?: number
+  customSections?: Array<{ title: string; prompt: string }>
 }
 
 /**
@@ -35,8 +36,8 @@ export async function analyzeLandingPage(
   // Step 1: Scrape the page
   const pageContent = await scrapePage(url)
 
-  // Step 2: Build prompt
-  const userPrompt = buildUserPrompt(pageContent)
+  // Step 2: Build prompt with optional custom sections
+  const userPrompt = buildUserPrompt(pageContent, options.customSections)
 
   // Step 3: Call LLM with retries
   let lastError: Error | null = null
@@ -168,6 +169,7 @@ function validateAnalysis(a: LandingPageAnalysis): void {
   if (!Array.isArray(raw.competitorAngles)) {
     raw.competitorAngles = []
   }
+  // customSections is optional — ignore if missing
 }
 
 // Map LLM snake_case fields to camelCase (fallback for models that don't follow field name instructions)

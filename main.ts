@@ -11,6 +11,7 @@ import { usageRoute } from "./apps/api/routes/usage.ts"
 import { authRoute } from "./apps/api/routes/auth.ts"
 import { historyRoute } from "./apps/api/routes/history.ts"
 import { keysRoute } from "./apps/api/routes/keys.ts"
+import { sectionsRoute } from "./apps/api/routes/sections.ts"
 import { Config } from "./apps/api/services/config.ts"
 
 const app = new Hono()
@@ -34,6 +35,7 @@ app.route("/api/usage", usageRoute)
 app.route("/api/auth", authRoute)
 app.route("/api/analyses", historyRoute)
 app.route("/api/keys", keysRoute)
+app.route("/api/sections", sectionsRoute)
 app.get("/api/health", (c) => c.json({ status: "ok", timestamp: new Date().toISOString() }))
 
 // --- SPA static files ---
@@ -88,6 +90,7 @@ app.get("/login", spaHandler)
 app.get("/register", spaHandler)
 app.get("/history", spaHandler)
 app.get("/settings", spaHandler)
+app.get("/sections", spaHandler)
 
 // --- Error handlers ---
 app.notFound((c) => c.json({ error: "Not found" }, 404))

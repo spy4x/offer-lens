@@ -65,4 +65,6 @@ async function migrate() {
 
 if (import.meta.main) {
   await migrate()
+  // Exit explicitly to close DB connections
+  Deno.exit(0)
 }
