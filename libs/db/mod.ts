@@ -158,9 +158,9 @@ class DbService extends DbServiceBase {
   ): Promise<{ id: number }> {
     const [row] = await this.db<{ id: number }[]>`
       INSERT INTO analyses (session_id, user_id, url, analysis, tokens_prompt, tokens_completion, tokens_total)
-      VALUES (${sessionId || ""}, ${userId}, ${url}, ${JSON.stringify(analysis)}, ${
-      tokens?.prompt ?? 0
-    }, ${tokens?.completion ?? 0}, ${tokens?.total ?? 0})
+      VALUES (${sessionId || ""}, ${userId}, ${url}, ${analysis}, ${tokens?.prompt ?? 0}, ${
+      tokens?.completion ?? 0
+    }, ${tokens?.total ?? 0})
       RETURNING id
     `
     return row

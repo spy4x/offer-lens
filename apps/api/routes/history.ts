@@ -15,13 +15,17 @@ export const historyRoute = new Hono()
       const db = getDb()
       const rows = await db.getHistory(userId)
 
-      const items = rows.map((r) => ({
-        id: r.id,
-        url: r.url,
-        createdAt: r.created_at.toISOString(),
-        primaryAngle: (r.analysis as { primaryAngle?: { type: string } })?.primaryAngle?.type ||
-          null,
-      }))
+      const items = rows.map((r) => {
+        // Handle double-encoded JSON
+        const analysisData = typeof r.analysis === "string" ? JSON.parse(r.analysis) : r.analysis
+        return {
+          id: r.id,
+          url: r.url,
+          createdAt: r.created_at.toISOString(),
+          primaryAngle: (analysisData as { primaryAngle?: { type: string } })?.primaryAngle?.type ||
+            null,
+        }
+      })
 
       return c.json({ analyses: items })
     } catch (err) {
@@ -45,10 +49,15 @@ export const historyRoute = new Hono()
         return c.json({ error: "Analysis not found" }, 404)
       }
 
+      // Handle double-encoded JSON (stored as JSON string in JSONB column)
+      const analysisData = typeof row.analysis === "string"
+        ? JSON.parse(row.analysis)
+        : row.analysis
+
       return c.json({
         id: row.id,
         url: row.url,
-        analysis: row.analysis,
+        analysis: analysisData,
         createdAt: row.created_at.toISOString(),
         tokensUsed: {
           promptTokens: row.tokens_prompt,
