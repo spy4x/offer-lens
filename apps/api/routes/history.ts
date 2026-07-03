@@ -1,5 +1,6 @@
 // History endpoint: GET /api/analyses — list user's past analyses
 import { Hono } from "hono"
+import { getDb } from "@offerlens/db"
 import { authenticateRequest } from "../services/auth.ts"
 
 export const historyRoute = new Hono()
@@ -10,33 +11,10 @@ export const historyRoute = new Hono()
     const userId = auth.user!.sub
 
     try {
-      const { default: postgres } = await import("postgres")
-      const sql = postgres({
-        host: Deno.env.get("DB_HOST") || "localhost",
-        port: parseInt(Deno.env.get("DB_PORT") || "5432"),
-        database: Deno.env.get("DB_NAME") || "offerlens",
-        user: Deno.env.get("DB_USER") || "offerlens",
-        password: Deno.env.get("DB_PASS") || "offerlens",
-        max: 2,
-      })
+      const db = getDb()
+      const rows = await db.getHistory(userId)
 
-      type AnalysisRow = {
-        id: number
-        url: string
-        created_at: Date
-        analysis: Record<string, unknown>
-      }
-      const rows = await sql<AnalysisRow[]>`
-        SELECT id, url, created_at, analysis
-        FROM analyses
-        WHERE user_id = ${userId}
-        ORDER BY created_at DESC
-        LIMIT 100
-      `
-
-      await sql.end()
-
-      const items = rows.map((r: AnalysisRow) => ({
+      const items = rows.map((r) => ({
         id: r.id,
         url: r.url,
         createdAt: r.created_at.toISOString(),
