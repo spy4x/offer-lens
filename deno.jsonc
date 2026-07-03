@@ -21,8 +21,6 @@
     "preact": "npm:preact@^10.25",
     "preact/": "npm:preact@^10.25/",
     "@preact/signals": "npm:@preact/signals@^1.3",
-    "typescript": "npm:typescript@^5.8",
-
     "fresh": "jsr:@fresh/core@^2.0",
     "$fresh/": "jsr:@fresh/core@^2.0/"
   },
@@ -30,7 +28,7 @@
     "dev": "deno run -A --env-file=.env --watch=libs/,apps/api/,main.ts main.ts",
     "mcp:dev": "deno run -A --env-file=.env apps/mcp/main.ts",
     "db:migrate": "deno run -A --env-file=.env libs/db/migrate.ts",
-    "ext:build": "deno run -A apps/ext/build.ts",
+    "ext:build": "mkdir -p apps/ext/build && deno bundle --outdir apps/ext/build apps/ext/src/background.ts apps/ext/src/content.ts apps/ext/src/sidepanel.ts",
     "check": "deno fmt --check && deno lint && deno check main.ts",
     "fix": "deno fmt && deno lint --fix",
     "test": "deno test -A --env-file=.env libs/"
