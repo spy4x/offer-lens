@@ -21,6 +21,7 @@ Scope: `api`, `web`, `ext`, `mcp`, `libs`, `deps` — omit if broad
 Summary: lowercase, no period, imperative mood
 
 Examples:
+
 ```
 feat(api): add auth endpoints
 fix(mcp): correct SSE endpoint format
@@ -60,6 +61,7 @@ Runs `fmt + lint + type-check + tests`. ALL must pass.
 **Do not merge yourself.** Wait for human review.
 
 When human says "merge":
+
 - If all commits relate to same feature → **squash**
 - If commits have independent meaning → **rebase**
 

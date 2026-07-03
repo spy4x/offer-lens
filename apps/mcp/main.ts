@@ -1,12 +1,12 @@
 // OfferLens MCP Server — Model Context Protocol
-// Dual transport: stdio (MCP SDK) or HTTP (direct API calls)
+// Dual transport: stdio (MCP SDK) or HTTP (Streamable HTTP)
 //
 // HTTP mode:
-//   GET  /mcp  → SSE (OpenWebUI discovery)
-//   POST /mcp  → JSON-RPC (calls backend API directly)
+//   GET  /mcp  → SSE stream (OpenWebUI discovery + keepalive)
+//   POST /mcp  → JSON-RPC (initialize, tools/list, tools/call)
 //   GET  /health
 //
-// Stdio mode: uses MCP SDK Server for Claude Desktop / Cursor
+// Stdio mode: MCP SDK stdio transport (Claude Desktop / Cursor)
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js"
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
@@ -23,42 +23,57 @@ const HTTP_PORT = parseInt(Deno.env.get("MCP_HTTP_PORT") || "0")
 const useHttp = Deno.args.includes("--http") || Deno.args.includes("-h") || HTTP_PORT > 0
 const port = HTTP_PORT || 3000
 
+const SERVER_NAME = "offerlens"
+const SERVER_VERSION = "1.0.0"
+const PROTOCOL_VERSION = "2025-06-18"
+
+// Tool definitions (shared between transports)
+const TOOLS = [
+  {
+    name: "analyze_offer",
+    description:
+      "Analyze a landing page. Returns structured intelligence: angle, hooks, ad copy, email/SMS angles, competitive intel.",
+    inputSchema: {
+      type: "object",
+      properties: { url: { type: "string", description: "Landing page URL to analyze" } },
+      required: ["url"],
+    },
+  },
+  {
+    name: "batch_analyze_offers",
+    description: "Analyze multiple landing pages in parallel (max 50).",
+    inputSchema: {
+      type: "object",
+      properties: {
+        urls: { type: "array", items: { type: "string" }, description: "URLs (max 50)" },
+      },
+      required: ["urls"],
+    },
+  },
+  {
+    name: "check_usage",
+    description: "Check remaining demo requests.",
+    inputSchema: { type: "object", properties: {} },
+  },
+]
+
+// MCP response headers helper
+function mcpHeaders(extra: Record<string, string> = {}): Record<string, string> {
+  return {
+    "Content-Type": "application/json",
+    "MCP-Version": PROTOCOL_VERSION,
+    "Mcp-Session-Id": SESSION_ID,
+    ...extra,
+  }
+}
+
 // --- Stdio mode: MCP SDK ---
 if (!useHttp) {
-  const server = new Server({ name: "offerlens", version: "1.0.0" }, {
+  const server = new Server({ name: SERVER_NAME, version: SERVER_VERSION }, {
     capabilities: { tools: {} },
   })
 
-  server.setRequestHandler(ListToolsRequestSchema, async () => ({
-    tools: [
-      {
-        name: "analyze_offer",
-        description:
-          "Analyze a landing page. Returns structured intelligence: angle, hooks, ad copy, email/SMS angles, competitive intel.",
-        inputSchema: {
-          type: "object",
-          properties: { url: { type: "string", description: "Landing page URL to analyze" } },
-          required: ["url"],
-        },
-      },
-      {
-        name: "batch_analyze_offers",
-        description: "Analyze multiple landing pages in parallel (max 50).",
-        inputSchema: {
-          type: "object",
-          properties: {
-            urls: { type: "array", items: { type: "string" }, description: "URLs (max 50)" },
-          },
-          required: ["urls"],
-        },
-      },
-      {
-        name: "check_usage",
-        description: "Check remaining demo requests.",
-        inputSchema: { type: "object", properties: {} },
-      },
-    ],
-  }))
+  server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: TOOLS }))
 
   server.setRequestHandler(CallToolRequestSchema, async (req: CallToolRequest) => {
     const { name, arguments: args } = req.params
@@ -97,71 +112,130 @@ if (!useHttp) {
   })
 
   await server.connect(new StdioServerTransport())
-  console.error("OfferLens MCP Server (stdio)")
+  console.error(`${SERVER_NAME} MCP Server (stdio)`)
 } else {
-  // --- HTTP mode: direct API calls (no MCP SDK wrapper needed) ---
-  console.error("OfferLens MCP Server (HTTP) starting on port", port)
+  // --- HTTP mode: Streamable HTTP (MCP spec) ---
+  console.error(`${SERVER_NAME} MCP Server (HTTP) starting on port ${port}`)
 
   Deno.serve({ port, hostname: "0.0.0.0" }, async (req: Request) => {
     const url = new URL(req.url)
 
+    // Health check
     if (url.pathname === "/health") {
       return new Response(JSON.stringify({ status: "ok" }), {
         headers: { "Content-Type": "application/json" },
       })
     }
 
+    // SSE stream — OpenWebUI discovery + keepalive
+    // MCP Streamable HTTP: client connects via GET for server-initiated messages
+    // We send endpoint event, then heartbeat to keep connection alive
+    if ((url.pathname === "/mcp" || url.pathname === "/") && req.method === "GET") {
+      const acceptHeader = req.headers.get("accept") || ""
+      const isSSE = acceptHeader.includes("text/event-stream")
+
+      if (!isSSE) {
+        // Plain GET — return endpoint info as JSON (for curl testing)
+        return new Response(JSON.stringify({ endpoint: "/mcp", protocol: PROTOCOL_VERSION }), {
+          headers: { "Content-Type": "application/json" },
+        })
+      }
+
+      // Proper SSE stream
+      const body = new ReadableStream({
+        start(controller) {
+          // Send endpoint event
+          const endpointMsg = `data: ${JSON.stringify({ endpoint: "/mcp" })}\n\n`
+          controller.enqueue(new TextEncoder().encode(endpointMsg))
+
+          // Heartbeat every 30s to keep connection alive
+          const heartbeat = setInterval(() => {
+            try {
+              controller.enqueue(new TextEncoder().encode(": heartbeat\n\n"))
+            } catch {
+              clearInterval(heartbeat)
+            }
+          }, 30_000)
+
+          req.signal.addEventListener("abort", () => {
+            clearInterval(heartbeat)
+          })
+        },
+      })
+
+      return new Response(body, {
+        headers: {
+          "Content-Type": "text/event-stream",
+          "Cache-Control": "no-cache",
+          "Connection": "keep-alive",
+        },
+      })
+    }
+
+    // JSON-RPC over POST
     if ((url.pathname === "/mcp" || url.pathname === "/") && req.method === "POST") {
       try {
-        const body = await req.text()
-        const msg = JSON.parse(body)
+        const bodyText = await req.text()
+        if (!bodyText.trim()) {
+          return new Response(
+            JSON.stringify({
+              jsonrpc: "2.0",
+              id: null,
+              error: { code: -32700, message: "Parse error: empty body" },
+            }),
+            { headers: mcpHeaders() },
+          )
+        }
 
-        let result: unknown
-        let error: { code: number; message: string } | null = null
+        const msg = JSON.parse(bodyText)
+        const msgId = msg.id ?? null
 
+        // Handle initialize — required by MCP Streamable HTTP spec
+        if (msg.method === "initialize") {
+          const clientVersion = msg.params?.protocolVersion || "unknown"
+          console.error(`MCP client initialize protocol=${clientVersion}`)
+
+          return new Response(
+            JSON.stringify({
+              jsonrpc: "2.0",
+              id: msgId,
+              result: {
+                protocolVersion: PROTOCOL_VERSION,
+                capabilities: { tools: {} },
+                serverInfo: { name: SERVER_NAME, version: SERVER_VERSION },
+              },
+            }),
+            { headers: mcpHeaders() },
+          )
+        }
+
+        // Handle notifications (no response expected)
+        if (
+          msg.method === "notifications/initialized" || msg.method?.startsWith("notifications/")
+        ) {
+          return new Response(null, { status: 202 })
+        }
+
+        // Handle tools/list
         if (msg.method === "tools/list") {
-          result = {
-            tools: [
-              {
-                name: "analyze_offer",
-                description:
-                  "Analyze a landing page. Returns structured intelligence: angle, hooks, ad copy, email/SMS angles, competitive intel.",
-                inputSchema: {
-                  type: "object",
-                  properties: {
-                    url: { type: "string", description: "Landing page URL to analyze" },
-                  },
-                  required: ["url"],
-                },
-              },
-              {
-                name: "batch_analyze_offers",
-                description: "Analyze multiple landing pages in parallel (max 50).",
-                inputSchema: {
-                  type: "object",
-                  properties: {
-                    urls: {
-                      type: "array",
-                      items: { type: "string" },
-                      description: "URLs (max 50)",
-                    },
-                  },
-                  required: ["urls"],
-                },
-              },
-              {
-                name: "check_usage",
-                description: "Check remaining demo requests.",
-                inputSchema: { type: "object", properties: {} },
-              },
-            ],
-          }
-        } else if (msg.method === "tools/call") {
-          const args = msg.params?.arguments || {}
-          const toolName = msg.params?.name
+          return new Response(
+            JSON.stringify({ jsonrpc: "2.0", id: msgId, result: { tools: TOOLS } }),
+            { headers: mcpHeaders() },
+          )
+        }
+
+        // Handle tools/call
+        if (msg.method === "tools/call") {
+          const params = msg.params || {}
+          const toolName = params.name
+          const args = params.arguments || {}
+
+          let result: unknown
 
           if (toolName === "analyze_offer") {
-            if (!args.url || typeof args.url !== "string") throw new Error("url required")
+            if (!args.url || typeof args.url !== "string") {
+              throw new Error("url required")
+            }
             result = await apiCall("/api/analyze", { url: args.url })
           } else if (toolName === "batch_analyze_offers") {
             if (!Array.isArray(args.urls) || args.urls.length === 0) {
@@ -172,45 +246,48 @@ if (!useHttp) {
           } else if (toolName === "check_usage") {
             result = await apiCall("/api/usage")
           } else {
-            error = { code: -32601, message: `Unknown tool: ${toolName}` }
+            return new Response(
+              JSON.stringify({
+                jsonrpc: "2.0",
+                id: msgId,
+                error: { code: -32601, message: `Unknown tool: ${toolName}` },
+              }),
+              { headers: mcpHeaders() },
+            )
           }
-        } else {
-          error = { code: -32601, message: `Method not found: ${msg.method}` }
+
+          return new Response(
+            JSON.stringify({
+              jsonrpc: "2.0",
+              id: msgId,
+              result: {
+                content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
+              },
+            }),
+            { headers: mcpHeaders() },
+          )
         }
 
-        if (error) {
-          return new Response(JSON.stringify({ jsonrpc: "2.0", id: msg.id ?? null, error }), {
-            headers: { "Content-Type": "application/json" },
-          })
-        }
-
-        // Wrap analysis result in proper content array
-        const responseResult = msg.method === "tools/call"
-          ? { content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }] }
-          : result
-
+        // Unknown method
         return new Response(
-          JSON.stringify({ jsonrpc: "2.0", id: msg.id ?? null, result: responseResult }),
-          {
-            headers: { "Content-Type": "application/json" },
-          },
+          JSON.stringify({
+            jsonrpc: "2.0",
+            id: msgId,
+            error: { code: -32601, message: `Method not found: ${msg.method}` },
+          }),
+          { headers: mcpHeaders() },
         )
       } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err)
+        const errMsg = err instanceof Error ? err.message : String(err)
         return new Response(
-          JSON.stringify({ jsonrpc: "2.0", id: null, error: { code: -32603, message: msg } }),
-          {
-            status: 500,
-            headers: { "Content-Type": "application/json" },
-          },
+          JSON.stringify({
+            jsonrpc: "2.0",
+            id: null,
+            error: { code: -32603, message: errMsg },
+          }),
+          { status: 500, headers: mcpHeaders() },
         )
       }
-    }
-
-    if ((url.pathname === "/mcp" || url.pathname === "/") && req.method === "GET") {
-      return new Response('data: {"endpoint":"/mcp"}\n\n', {
-        headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache" },
-      })
     }
 
     return new Response("Not Found", { status: 404 })
