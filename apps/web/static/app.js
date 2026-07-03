@@ -188,29 +188,31 @@ function renderResults(analysis) {
   let html = ""
 
   // Primary Angle
-  html += `<section class="section">
-    <h2>&#127919; PRIMARY ANGLE</h2>
-    <div class="card">
-      <div class="angle-header">
-        <span class="badge badge-angle">${esc(pa.type || "unknown")}</span>
-        <span class="confidence">${pa.confidence ?? 0}% confidence</span>
+  html += `<section class="mb-6">
+    <h2 class="text-lg mb-2.5 text-accent flex items-center justify-between">&#127919; PRIMARY ANGLE</h2>
+    <div class="bg-card border border-border rounded-lg px-4.5 py-3.5">
+      <div class="flex items-center gap-2.5 mb-2">
+        <span class="bg-accent text-white px-2.5 py-0.5 rounded text-xs font-semibold uppercase text-sm">${
+    esc(pa.type || "unknown")
+  }</span>
+        <span class="text-sm text-green font-semibold">${pa.confidence ?? 0}% confidence</span>
       </div>
-      <p class="text-muted">${esc(pa.explanation || "")}</p>
+      <p class="text-xs text-fg-3">${esc(pa.explanation || "")}</p>
     </div>
   </section>`
 
   // Hook Ideas
   if (analysis.hookIdeas?.length) {
-    html += `<section class="section">
-      <h2>&#128203; HOOK IDEAS <button class="btn btn-small copy-all-btn" data-copy="${
+    html += `<section class="mb-6">
+      <h2 class="text-lg mb-2.5 text-accent flex items-center justify-between">&#128203; HOOK IDEAS <button class="text-xs px-2.5 py-1 bg-accent text-white rounded-lg font-medium inline-flex items-center gap-1.5 hover:bg-accent-hover border-none cursor-pointer copy-all-btn" data-copy="${
       escAttr(analysis.hookIdeas.join("\n"))
     }">Copy All</button></h2>
-      <ol class="hook-list">
+      <ol class="list-decimal pl-6">
         ${
       analysis.hookIdeas.map((h, i) => `
-          <li class="hook-item">
+          <li class="flex justify-between items-start py-1.5 gap-2.5 text-sm">
             <span>${esc(h)}</span>
-            <button class="btn-icon copy-btn" data-copy="${
+            <button class="bg-transparent border-none cursor-pointer px-1.5 py-0.5 text-sm text-fg-2 rounded hover:bg-input hover:text-fg copy-btn" data-copy="${
         escAttr(h)
       }" title="Copy">&#128203;</button>
           </li>
@@ -221,67 +223,65 @@ function renderResults(analysis) {
   }
 
   // Target Audience
-  html += `<section class="section">
-    <h2>&#128100; TARGET AUDIENCE</h2>
-    <div class="card">
+  html += `<section class="mb-6">
+    <h2 class="text-lg mb-2.5 text-accent flex items-center justify-between">&#128100; TARGET AUDIENCE</h2>
+    <div class="bg-card border border-border rounded-lg px-4.5 py-3.5">
       <p><strong>Demographics:</strong> ${esc(aud.demographics || "")}</p>
       <p><strong>Interests:</strong> ${esc(aud.interests || "")}</p>
-      <p><strong>Likely Platform:</strong> <span class="badge">${
+      <p><strong>Likely Platform:</strong> <span class="bg-accent text-white px-2.5 py-0.5 rounded text-xs font-semibold">${
     esc(aud.likelyPlatform || "")
   }</span></p>
-      <p class="text-muted"><strong>Notes:</strong> ${esc(aud.confidenceNotes || "")}</p>
+      <p class="text-xs text-fg-3"><strong>Notes:</strong> ${esc(aud.confidenceNotes || "")}</p>
     </div>
   </section>`
 
   // Ad Copy
-  html += `<section class="section">
-    <h2>&#128221; AD COPY</h2>
-    <div class="tabs">
-      <button class="tab active ad-tab" data-tab="facebook">Facebook</button>
-      <button class="tab ad-tab" data-tab="google">Google</button>
-      <button class="tab ad-tab" data-tab="native">Native</button>
+  html += `<section class="mb-6">
+    <h2 class="text-lg mb-2.5 text-accent flex items-center justify-between">&#128221; AD COPY</h2>
+    <div class="flex gap-0.5 mb-2.5">
+      <button class="flex-1 py-2 px-3 bg-accent text-white border border-accent cursor-pointer text-xs text-center rounded-lg ad-tab" data-tab="facebook">Facebook</button>
+      <button class="flex-1 py-2 px-3 bg-input border border-border text-fg-2 cursor-pointer text-xs text-center rounded-lg ad-tab" data-tab="google">Google</button>
+      <button class="flex-1 py-2 px-3 bg-input border border-border text-fg-2 cursor-pointer text-xs text-center rounded-lg ad-tab" data-tab="native">Native</button>
     </div>
-    <div class="tab-content" id="ad-facebook">${
-    renderAdVariants(analysis.adCopy?.facebook || [])
-  }</div>
-    <div class="tab-content hidden" id="ad-google">${
-    renderAdVariants(analysis.adCopy?.google || [])
-  }</div>
-    <div class="tab-content hidden" id="ad-native">${
-    renderNativeVariants(analysis.adCopy?.native || [])
-  }</div>
+    <div class="" id="ad-facebook">${renderAdVariants(analysis.adCopy?.facebook || [])}</div>
+    <div class="hidden" id="ad-google">${renderAdVariants(analysis.adCopy?.google || [])}</div>
+    <div class="hidden" id="ad-native">${renderNativeVariants(analysis.adCopy?.native || [])}</div>
   </section>`
 
   // Email & SMS
-  html += `<section class="section">
-    <h2>&#128231; EMAIL & SMS ANGLES</h2>
-    <div class="card">
-      <h4>Subject Lines <button class="btn btn-small copy-all-btn" data-copy="${
+  html += `<section class="mb-6">
+    <h2 class="text-lg mb-2.5 text-accent flex items-center justify-between">&#128231; EMAIL & SMS ANGLES</h2>
+    <div class="bg-card border border-border rounded-lg px-4.5 py-3.5">
+      <h4>Subject Lines <button class="text-xs px-2.5 py-1 bg-accent text-white rounded-lg font-medium inline-flex items-center gap-1.5 hover:bg-accent-hover border-none cursor-pointer copy-all-btn" data-copy="${
     escAttr((email.subjectLines || []).join("\n"))
   }">Copy All</button></h4>
       <ul>
         ${
     (email.subjectLines || []).map((s) => `
-          <li class="copy-row"><span>${esc(s)}</span><button class="btn-icon copy-btn" data-copy="${
+          <li class="flex justify-between items-start gap-2.5"><span>${
+      esc(s)
+    }</span><button class="bg-transparent border-none cursor-pointer px-1.5 py-0.5 text-sm text-fg-2 rounded hover:bg-input hover:text-fg copy-btn" data-copy="${
       escAttr(s)
     }">&#128203;</button></li>
         `).join("")
   }
       </ul>
       <h4>Email Body Angle</h4>
-      <p class="text-muted">${esc(email.bodyAngle || "")}</p>
-      <h4>SMS Pitch <button class="btn-icon copy-btn" data-copy="${
+      <p class="text-xs text-fg-3">${esc(email.bodyAngle || "")}</p>
+      <h4>SMS Pitch <button class="bg-transparent border-none cursor-pointer px-1.5 py-0.5 text-sm text-fg-2 rounded hover:bg-input hover:text-fg copy-btn" data-copy="${
     escAttr(email.smsAngle || "")
   }">&#128203;</button></h4>
-      <p class="sms-pitch">${esc(email.smsAngle || "")}</p>
+      <p class="bg-input border-l-4 border-accent px-3 py-2.5 rounded text-sm">${
+    esc(email.smsAngle || "")
+  }</p>
     </div>
   </section>`
 
   // Trust Signals
   if (analysis.trustSignals?.length) {
-    html += `<section class="section">
-      <h2>&#128737; TRUST SIGNALS</h2>
-      <div class="card">
+    html += `<section class="mb-6">
+      <h2 class="text-lg mb-2.5 text-accent flex items-center justify-between">&#128737; TRUST SIGNALS</h2>
+      <div class="bg-card border border-border rounded-lg px-4.5 py-3.5">
         ${
       analysis.trustSignals.map((ts) => {
         const icon = ts.present ? "&#9989;" : "&#10060;"
@@ -301,9 +301,9 @@ function renderResults(analysis) {
 
   // Conversion Blockers
   if (analysis.conversionBlockers?.length) {
-    html += `<section class="section">
-      <h2>&#9888; CONVERSION BLOCKERS</h2>
-      <div class="card">
+    html += `<section class="mb-6">
+      <h2 class="text-lg mb-2.5 text-accent flex items-center justify-between">&#9888; CONVERSION BLOCKERS</h2>
+      <div class="bg-card border border-border rounded-lg px-4.5 py-3.5">
         ${
       analysis.conversionBlockers.map((b) => {
         const sev = b.severity === "high"
@@ -311,9 +311,9 @@ function renderResults(analysis) {
           : b.severity === "medium"
           ? "&#128993;"
           : "&#128994;"
-        return `<div class="blocker"><p>${sev} <strong>${
+        return `<div class="mb-2.5"><p>${sev} <strong>${
           esc(b.issue)
-        }</strong></p><p class="text-muted">Suggestion: ${esc(b.suggestion)}</p></div>`
+        }</strong></p><p class="text-xs text-fg-3">Suggestion: ${esc(b.suggestion)}</p></div>`
       }).join("")
     }
       </div>
@@ -322,18 +322,20 @@ function renderResults(analysis) {
 
   // A/B Tests
   if (analysis.abTestIdeas?.length) {
-    html += `<section class="section">
-      <h2>&#128161; A/B TEST IDEAS</h2>
-      <ol class="card">${analysis.abTestIdeas.map((i) => `<li>${esc(i)}</li>`).join("")}</ol>
+    html += `<section class="mb-6">
+      <h2 class="text-lg mb-2.5 text-accent flex items-center justify-between">&#128161; A/B TEST IDEAS</h2>
+      <ol class="bg-card border border-border rounded-lg px-4.5 py-3.5">${
+      analysis.abTestIdeas.map((i) => `<li>${esc(i)}</li>`).join("")
+    }</ol>
     </section>`
   }
 
   // Competitive Intel
-  html += `<section class="section">
-    <h2>&#128373; COMPETITIVE INTEL</h2>
-    <div class="card">
+  html += `<section class="mb-6">
+    <h2 class="text-lg mb-2.5 text-accent flex items-center justify-between">&#128373; COMPETITIVE INTEL</h2>
+    <div class="bg-card border border-border rounded-lg px-4.5 py-3.5">
       <p><strong>Likely Traffic:</strong> ${esc((intel.likelyTrafficSources || []).join(", "))}</p>
-      <p><strong>Est. Daily Spend:</strong> <span class="badge">${
+      <p><strong>Est. Daily Spend:</strong> <span class="bg-accent text-white px-2.5 py-0.5 rounded text-xs font-semibold">${
     esc(intel.estimatedDailySpend || "")
   }</span></p>
       <p><strong>Competitors Testing:</strong> ${
@@ -344,9 +346,11 @@ function renderResults(analysis) {
 
   // Competitor Angles
   if (analysis.competitorAngles?.length) {
-    html += `<section class="section">
-      <h2>&#9878; COMPETITOR COUNTER-ANGLES</h2>
-      <ul class="card">${analysis.competitorAngles.map((a) => `<li>${esc(a)}</li>`).join("")}</ul>
+    html += `<section class="mb-6">
+      <h2 class="text-lg mb-2.5 text-accent flex items-center justify-between">&#9878; COMPETITOR COUNTER-ANGLES</h2>
+      <ul class="bg-card border border-border rounded-lg px-4.5 py-3.5">${
+      analysis.competitorAngles.map((a) => `<li>${esc(a)}</li>`).join("")
+    }</ul>
     </section>`
   }
 
@@ -387,17 +391,23 @@ function renderResults(analysis) {
 function renderAdVariants(variants) {
   if (!variants.length) return "<p>No variants</p>"
   return variants.map((v, i) => `
-    <div class="variant">
-      <p class="variant-label">Variant ${i + 1}</p>
+    <div class="bg-input rounded px-3 py-2.5 mb-2">
+      <p class="text-xs text-accent-hover mb-1.5 font-semibold">Variant ${i + 1}</p>
       <p><strong>Headline:</strong> ${
     esc(v.headline)
-  } <button class="btn-icon copy-btn" data-copy="${escAttr(v.headline)}">&#128203;</button></p>
+  } <button class="bg-transparent border-none cursor-pointer px-1.5 py-0.5 text-sm text-fg-2 rounded hover:bg-input hover:text-fg copy-btn" data-copy="${
+    escAttr(v.headline)
+  }">&#128203;</button></p>
       <p><strong>Text:</strong> ${
     esc(v.primaryText)
-  } <button class="btn-icon copy-btn" data-copy="${escAttr(v.primaryText)}">&#128203;</button></p>
-      <p><strong>CTA:</strong> <span class="badge">${
+  } <button class="bg-transparent border-none cursor-pointer px-1.5 py-0.5 text-sm text-fg-2 rounded hover:bg-input hover:text-fg copy-btn" data-copy="${
+    escAttr(v.primaryText)
+  }">&#128203;</button></p>
+      <p><strong>CTA:</strong> <span class="bg-accent text-white px-2.5 py-0.5 rounded text-xs font-semibold">${
     esc(v.cta)
-  }</span> <button class="btn-icon copy-btn" data-copy="${escAttr(v.cta)}">&#128203;</button></p>
+  }</span> <button class="bg-transparent border-none cursor-pointer px-1.5 py-0.5 text-sm text-fg-2 rounded hover:bg-input hover:text-fg copy-btn" data-copy="${
+    escAttr(v.cta)
+  }">&#128203;</button></p>
     </div>
   `).join("")
 }
@@ -405,17 +415,23 @@ function renderAdVariants(variants) {
 function renderNativeVariants(variants) {
   if (!variants.length) return "<p>No variants</p>"
   return variants.map((v, i) => `
-    <div class="variant">
-      <p class="variant-label">Variant ${i + 1}</p>
+    <div class="bg-input rounded px-3 py-2.5 mb-2">
+      <p class="text-xs text-accent-hover mb-1.5 font-semibold">Variant ${i + 1}</p>
       <p><strong>Headline:</strong> ${
     esc(v.headline)
-  } <button class="btn-icon copy-btn" data-copy="${escAttr(v.headline)}">&#128203;</button></p>
-      <p><strong>Body:</strong> ${esc(v.body)} <button class="btn-icon copy-btn" data-copy="${
+  } <button class="bg-transparent border-none cursor-pointer px-1.5 py-0.5 text-sm text-fg-2 rounded hover:bg-input hover:text-fg copy-btn" data-copy="${
+    escAttr(v.headline)
+  }">&#128203;</button></p>
+      <p><strong>Body:</strong> ${
+    esc(v.body)
+  } <button class="bg-transparent border-none cursor-pointer px-1.5 py-0.5 text-sm text-fg-2 rounded hover:bg-input hover:text-fg copy-btn" data-copy="${
     escAttr(v.body)
   }">&#128203;</button></p>
-      <p><strong>CTA:</strong> <span class="badge">${
+      <p><strong>CTA:</strong> <span class="bg-accent text-white px-2.5 py-0.5 rounded text-xs font-semibold">${
     esc(v.cta)
-  }</span> <button class="btn-icon copy-btn" data-copy="${escAttr(v.cta)}">&#128203;</button></p>
+  }</span> <button class="bg-transparent border-none cursor-pointer px-1.5 py-0.5 text-sm text-fg-2 rounded hover:bg-input hover:text-fg copy-btn" data-copy="${
+    escAttr(v.cta)
+  }">&#128203;</button></p>
     </div>
   `).join("")
 }
@@ -424,7 +440,8 @@ function renderBatchResults(data) {
   const resultsEl = document.getElementById("results")
   if (!resultsEl) return
 
-  let html = `<section class="section"><h2>&#128230; BATCH RESULTS</h2>`
+  let html =
+    `<section class="mb-6"><h2 class="text-lg mb-2.5 text-accent flex items-center justify-between">&#128230; BATCH RESULTS</h2>`
 
   if (data.results?.length) {
     html += `<p><strong>${data.results.length} analyzed successfully</strong></p>`
@@ -433,10 +450,14 @@ function renderBatchResults(data) {
     for (const r of data.results) {
       const a = r.analysis
       html += `<tr>
-        <td class="batch-url">${esc(r.url)}</td>
-        <td><span class="badge badge-angle">${esc(a?.primaryAngle?.type || "?")}</span></td>
-        <td><span class="confidence">${a?.primaryAngle?.confidence ?? 0}%</span></td>
-        <td class="text-muted">${esc(a?.hookIdeas?.[0] || "")}</td>
+        <td class="text-xs break-all text-accent-hover">${esc(r.url)}</td>
+        <td><span class="bg-accent text-white px-2.5 py-0.5 rounded text-xs font-semibold uppercase text-sm">${
+        esc(a?.primaryAngle?.type || "?")
+      }</span></td>
+        <td><span class="text-sm text-green font-semibold">${
+        a?.primaryAngle?.confidence ?? 0
+      }%</span></td>
+        <td class="text-xs text-fg-3">${esc(a?.hookIdeas?.[0] || "")}</td>
         <td>${esc(a?.conversionBlockers?.[0]?.issue || "")}</td>
       </tr>`
     }
@@ -445,7 +466,7 @@ function renderBatchResults(data) {
 
   if (data.errors?.length) {
     html += `<p><strong class="text-red">${data.errors.length} errors</strong></p>`
-    html += `<ul class="error-list">${
+    html += `<ul class="pl-5 mt-2.5">${
       data.errors.map((e) => `<li>${esc(e.url)}: ${esc(e.error)}</li>`).join("")
     }</ul>`
   }

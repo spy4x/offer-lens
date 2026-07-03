@@ -59,34 +59,36 @@ function serveWebPage(page: string) {
 
     if (page === "home" || page === "analyze") {
       const urlDisplay = page === "analyze"
-        ? `<div class="url-display"><span class="url-label">Analyzed page:</span><span class="url-text">${
+        ? `<div class="bg-input border border-border rounded-lg px-3.5 py-2.5 max-w-[650px] mx-auto text-left"><span class="text-xs text-fg-3 block">Analyzed page:</span><span class="text-sm text-fg-2 break-all">${
           escHtml(urlParam)
         }</span></div>`
-        : `<form id="analyzeForm" class="analyze-form">
-            <div class="input-group">
-              <input type="url" id="urlInput" class="input input-lg" placeholder="Paste a landing page URL..." required />
-              <button type="submit" class="btn btn-primary btn-lg">&#128270; Analyze</button>
+        : `<form id="analyzeForm" class="max-w-[650px] mx-auto">
+            <div class="flex gap-2 max-w-[650px] mx-auto">
+              <input type="url" id="urlInput" class="w-full px-4.5 py-3.5 bg-input border border-border rounded-lg text-fg text-base focus:outline-none focus:border-accent" placeholder="Paste a landing page URL..." required />
+              <button type="submit" class="px-7 py-3.5 bg-accent text-white rounded-lg font-medium inline-flex items-center gap-1.5 hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed border-none cursor-pointer">&#128270; Analyze</button>
             </div>
           </form>`
 
       title = page === "analyze" ? "Analysis" : "Home"
-      body = `<section class="hero">
-        <h1>${page === "analyze" ? "Analysis Results" : "Analyze Any Landing Page in Seconds"}</h1>
+      body = `<section class="text-center mb-6">
+        <h1 class="text-3xl mb-2">${
+        page === "analyze" ? "Analysis Results" : "Analyze Any Landing Page in Seconds"
+      }</h1>
         ${
         page === "home"
-          ? '<p class="hero-sub">Get angles, hooks, ad copy, email/SMS angles, and competitive intel — instantly.</p>'
+          ? '<p class="text-base text-fg-2 mb-5">Get angles, hooks, ad copy, email/SMS angles, and competitive intel — instantly.</p>'
           : ""
       }
         ${urlDisplay}
       </section>`
     } else if (page === "batch") {
       title = "Batch Analysis"
-      body = `<section class="hero">
-        <h1>Batch Analysis</h1>
-        <p class="hero-sub">Paste up to 50 URLs (one per line) for comparison.</p>
-        <div class="batch-form">
-          <textarea id="batchUrls" class="textarea textarea-lg" rows="10" placeholder="https://example.com/offer1&#10;https://example.com/offer2&#10;..."></textarea>
-          <button id="batchAnalyzeBtn" class="btn btn-primary btn-lg">&#128270; Analyze All</button>
+      body = `<section class="text-center mb-6">
+        <h1 class="text-3xl mb-2">Batch Analysis</h1>
+        <p class="text-base text-fg-2 mb-5">Paste up to 50 URLs (one per line) for comparison.</p>
+        <div class="max-w-[650px] mx-auto flex flex-col gap-3">
+          <textarea id="batchUrls" class="w-full px-3.5 py-2.5 bg-input border border-border rounded-lg text-fg text-base focus:outline-none focus:border-accent resize-vertical min-h-[200px]" rows="10" placeholder="https://example.com/offer1&#10;https://example.com/offer2&#10;..."></textarea>
+          <button id="batchAnalyzeBtn" class="px-7 py-3.5 bg-accent text-white rounded-lg font-medium inline-flex items-center gap-1.5 hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed border-none cursor-pointer">&#128270; Analyze All</button>
         </div>
       </section>`
     }
@@ -105,27 +107,27 @@ function renderShell(title: string, body: string, extraScripts: string) {
   <link rel="stylesheet" href="/styles.css" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#128269;</text></svg>" />
 </head>
-<body class="dark">
-  <div id="app">
-    <header class="header">
-      <div class="header-left">
-        <a href="/" class="logo">&#128269; OfferLens</a>
+<body class="dark bg-surface text-fg min-h-screen">
+  <div id="app" class="max-w-[900px] mx-auto px-5 py-4 pb-10">
+    <header class="flex justify-between items-center pb-4 border-b border-border mb-6">
+      <div class="flex items-center gap-3">
+        <a href="/" class="text-xl font-bold text-accent hover:no-underline">&#128269; OfferLens</a>
       </div>
-      <div class="header-right">
-        <span id="demoCounter" class="demo-counter">&#128202; --/50</span>
-        <a href="/batch" class="btn btn-small">&#128230; Batch</a>
+      <div class="flex items-center gap-3">
+        <span id="demoCounter" class="text-xs text-fg-2 bg-input px-3 py-1 rounded">&#128202; --/50</span>
+        <a href="/batch" class="text-xs px-2.5 py-1 bg-accent text-white rounded-lg font-medium inline-flex items-center gap-1.5 hover:bg-accent-hover no-underline">&#128230; Batch</a>
       </div>
     </header>
     <main>${body}</main>
-    <div id="loadingState" class="loading hidden">
+    <div id="loadingState" class="text-center py-10 hidden">
       <div class="spinner"></div>
       <p>Analyzing page... (2-5s)</p>
     </div>
-    <div id="errorState" class="error hidden">
+    <div id="errorState" class="bg-red/10 border border-red rounded-lg p-4 my-4 mx-auto max-w-[650px] text-center hidden">
       <p id="errorMessage"></p>
     </div>
-    <div id="results" class="results hidden"></div>
-    <footer class="footer">
+    <div id="results" class="mt-6 hidden"></div>
+    <footer class="mt-10 pt-5 border-t border-border text-center text-xs text-fg-3">
       <span>OfferLens v1.0 &middot; It's Today Media</span>
     </footer>
   </div>
