@@ -24,11 +24,8 @@ type Page =
 
 function getPageFromPath(): Page {
   const path = location.pathname
-
-  // Match /analyses/:id first (before generic fallback)
   const analysisMatch = path.match(/^\/analyses\/(\d+)$/)
   if (analysisMatch) return { type: "analysis", id: parseInt(analysisMatch[1], 10) }
-
   if (path === "/batch") return { type: "batch" }
   if (path === "/login") return { type: "login" }
   if (path === "/register") return { type: "register" }
@@ -42,43 +39,30 @@ export function App() {
   const [page, setPage] = useState<Page>(getPageFromPath)
   const [preloadedUrl, setPreloadedUrl] = useState("")
 
-  // Apply theme on mount
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme.value)
   }, [])
 
-  // Restore session: if token exists, verify it
   useEffect(() => {
     if (authToken.value && !currentUser.value) {
-      fetchMe().then((res) => {
-        setAuth(authToken.value, res.user)
-      }).catch(() => {
-        // Token invalid — clear
-        setAuth(null, null)
-      })
+      fetchMe().then((res) => setAuth(authToken.value, res.user)).catch(() => setAuth(null, null))
     }
   }, [])
 
   useEffect(() => {
-    const handlePop = () => {
-      setPage(getPageFromPath())
-    }
+    const handlePop = () => setPage(getPageFromPath())
     addEventListener("popstate", handlePop)
-
     const params = new URLSearchParams(location.search)
     const urlParam = params.get("url") || ""
-    if (page.type === "home" && urlParam) {
-      setPreloadedUrl(urlParam)
-    }
-
+    if (page.type === "home" && urlParam) setPreloadedUrl(urlParam)
     return () => removeEventListener("popstate", handlePop)
   }, [])
 
   return (
-    <div class="max-w-[900px] mx-auto px-5 py-4 pb-10">
+    <div class="min-h-screen flex flex-col">
       <Header />
 
-      <main>
+      <main class="flex-1 max-w-[1100px] mx-auto w-full px-4 sm:px-6 py-6 sm:py-8">
         {page.type === "home" && <HomePage preloadedUrl={preloadedUrl} />}
         {page.type === "batch" && <BatchPage />}
         {page.type === "login" && <LoginPage />}
@@ -89,8 +73,14 @@ export function App() {
         {page.type === "analysis" && <AnalysisPage id={page.id} />}
       </main>
 
-      <footer class="mt-10 pt-5 border-t border-border text-center text-xs text-fg-3">
-        <span>OfferLens v1.0 &middot; It's Today Media</span>
+      <footer class="border-t border-border/50 py-6 mt-auto">
+        <div class="max-w-[1100px] mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-fg-3">
+          <span>© {new Date().getFullYear()} OfferLens · AI-Powered Marketing Intelligence</span>
+          <span>
+            <a href="/" class="text-fg-2 hover:text-fg transition-colors">Home</a> &middot;{" "}
+            <a href="/batch" class="text-fg-2 hover:text-fg transition-colors">Batch</a>
+          </span>
+        </div>
       </footer>
 
       <ToastContainer />

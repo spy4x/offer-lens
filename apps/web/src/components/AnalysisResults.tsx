@@ -67,7 +67,7 @@ function CollapsibleSection({
 function PrimaryAngle({ angle }: { angle: LandingPageAnalysis["primaryAngle"] }) {
   return (
     <CollapsibleSection title="🎯 PRIMARY ANGLE">
-      <div class="bg-card border border-border rounded-lg px-4.5 py-3.5">
+      <div class="glass rounded-xl px-5 py-4">
         <div class="flex items-center gap-2.5 mb-2">
           <span class="bg-accent text-white px-2.5 py-0.5 rounded text-xs font-semibold uppercase">
             {esc(angle.type)}
@@ -106,7 +106,7 @@ function HooksList({ hooks }: { hooks: string[] }) {
 function TargetAudience({ audience }: { audience: LandingPageAnalysis["targetAudience"] }) {
   return (
     <CollapsibleSection title="👤 TARGET AUDIENCE">
-      <div class="bg-card border border-border rounded-lg px-4.5 py-3.5">
+      <div class="glass rounded-xl px-5 py-4">
         <p>
           <strong>Demographics:</strong> {esc(audience.demographics || "")}
         </p>
@@ -138,10 +138,10 @@ function AdCopySection({ adCopy }: { adCopy: LandingPageAnalysis["adCopy"] }) {
             key={t}
             type="button"
             onClick={() => setTab(t)}
-            class={`flex-1 py-2 px-3 cursor-pointer text-xs text-center rounded-lg ${
+            class={`flex-1 py-2.5 px-3 cursor-pointer text-xs text-center rounded-lg transition-colors ${
               tab === t
-                ? "bg-accent text-white border border-accent"
-                : "bg-input border border-border text-fg-2"
+                ? "bg-accent text-white font-medium shadow-sm"
+                : "bg-input/50 border border-border/50 text-fg-2 hover:bg-input"
             }`}
           >
             {t.charAt(0).toUpperCase() + t.slice(1)}
@@ -160,7 +160,7 @@ function AdVariants({ variants }: { variants: AdVariant[] }) {
   return (
     <>
       {variants.map((v, i) => (
-        <div key={i} class="bg-input rounded px-3 py-2.5 mb-2">
+        <div key={i} class="glass rounded-xl px-4 py-3 mb-2">
           <p class="text-xs text-accent-hover mb-1.5 font-semibold">Variant {i + 1}</p>
           <p>
             <strong>Headline:</strong> {esc(v.headline)} <CopyButton text={v.headline} />
@@ -186,7 +186,7 @@ function NativeVariants({ variants }: { variants: NativeAdVariant[] }) {
   return (
     <>
       {variants.map((v, i) => (
-        <div key={i} class="bg-input rounded px-3 py-2.5 mb-2">
+        <div key={i} class="glass rounded-xl px-4 py-3 mb-2">
           <p class="text-xs text-accent-hover mb-1.5 font-semibold">Variant {i + 1}</p>
           <p>
             <strong>Headline:</strong> {esc(v.headline)} <CopyButton text={v.headline} />
@@ -210,7 +210,7 @@ function NativeVariants({ variants }: { variants: NativeAdVariant[] }) {
 function EmailSmsSection({ email }: { email: LandingPageAnalysis["emailAngle"] }) {
   return (
     <CollapsibleSection title="📧 EMAIL & SMS ANGLES">
-      <div class="bg-card border border-border rounded-lg px-4.5 py-3.5">
+      <div class="glass rounded-xl px-5 py-4">
         <h4>
           Subject Lines{" "}
           <CopyButton
@@ -232,7 +232,7 @@ function EmailSmsSection({ email }: { email: LandingPageAnalysis["emailAngle"] }
         <h4>
           SMS Pitch <CopyButton text={email.smsAngle || ""} />
         </h4>
-        <p class="bg-input border-l-4 border-accent px-3 py-2.5 rounded text-sm">
+        <p class="glass rounded-xl border-l-4 border-accent px-4 py-3 text-sm">
           {esc(email.smsAngle || "")}
         </p>
       </div>
@@ -243,7 +243,7 @@ function EmailSmsSection({ email }: { email: LandingPageAnalysis["emailAngle"] }
 function TrustSignalsSection({ signals }: { signals: TrustSignal[] }) {
   return (
     <CollapsibleSection title="🕊 TRUST SIGNALS">
-      <div class="bg-card border border-border rounded-lg px-4.5 py-3.5">
+      <div class="glass rounded-xl px-5 py-4">
         {signals.map((ts, i) => {
           const icon = ts.present ? "✅" : "❌"
           const sc = ts.strength === "strong"
@@ -266,7 +266,7 @@ function TrustSignalsSection({ signals }: { signals: TrustSignal[] }) {
 function BlockersSection({ blockers }: { blockers: Blocker[] }) {
   return (
     <CollapsibleSection title="⚠ CONVERSION BLOCKERS">
-      <div class="bg-card border border-border rounded-lg px-4.5 py-3.5">
+      <div class="glass rounded-xl px-5 py-4">
         {blockers.map((b, i) => {
           const dot = b.severity === "high" ? "🔴" : b.severity === "medium" ? "🟡" : "🟢"
           return (
@@ -286,7 +286,7 @@ function BlockersSection({ blockers }: { blockers: Blocker[] }) {
 function AbTestsSection({ ideas }: { ideas: string[] }) {
   return (
     <CollapsibleSection title="💡 A/B TEST IDEAS">
-      <ol class="bg-card border border-border rounded-lg px-4.5 py-3.5">
+      <ol class="glass rounded-xl px-5 py-4">
         {ideas.map((i, idx) => <li key={idx}>{esc(i)}</li>)}
       </ol>
     </CollapsibleSection>
@@ -296,7 +296,7 @@ function AbTestsSection({ ideas }: { ideas: string[] }) {
 function CompetitiveIntel({ intel }: { intel: LandingPageAnalysis["competitiveIntel"] }) {
   return (
     <CollapsibleSection title="🕺 COMPETITIVE INTEL">
-      <div class="bg-card border border-border rounded-lg px-4.5 py-3.5">
+      <div class="glass rounded-xl px-5 py-4">
         <p>
           <strong>Likely Traffic:</strong> {esc((intel.likelyTrafficSources || []).join(", "))}
         </p>
@@ -317,7 +317,7 @@ function CompetitiveIntel({ intel }: { intel: LandingPageAnalysis["competitiveIn
 function CompetitorAnglesSection({ angles }: { angles: string[] }) {
   return (
     <CollapsibleSection title="⚔ COMPETITOR COUNTER-ANGLES">
-      <ul class="bg-card border border-border rounded-lg px-4.5 py-3.5">
+      <ul class="glass rounded-xl px-5 py-4">
         {angles.map((a, i) => <li key={i}>{esc(a)}</li>)}
       </ul>
     </CollapsibleSection>
@@ -330,7 +330,7 @@ function CustomSectionsSection({ results }: { results: Array<{ title: string; an
     <CollapsibleSection title="Custom Analysis" defaultOpen>
       <div class="flex flex-col gap-3">
         {results.map((r, i) => (
-          <div key={i} class="bg-card border border-border rounded-lg px-4.5 py-3.5">
+          <div key={i} class="glass rounded-xl px-5 py-4">
             <h4 class="font-semibold text-sm mb-1">{esc(r.title)}</h4>
             <p class="text-sm text-fg-2">{esc(r.answer)}</p>
           </div>

@@ -12,19 +12,16 @@ export function BatchPage() {
   >([])
 
   useEffect(() => {
-    fetchUsage().then((u) => {
-      demoUsage.value = u
-    }).catch(() => {})
-    // Load custom sections if authenticated
+    fetchUsage().then((u) => demoUsage.value = u).catch(() => {})
     if (authToken.value) {
-      fetchSections().then((data) => {
+      fetchSections().then((data) =>
         setCustomSections(
           data.sections.filter((s) => s.isActive).map((s) => ({
             title: s.title,
             prompt: s.prompt,
           })),
         )
-      }).catch(() => {})
+      ).catch(() => {})
     }
   }, [])
 
@@ -38,12 +35,10 @@ export function BatchPage() {
       errorMessage.value = "Maximum 50 URLs allowed."
       return
     }
-
     isLoading.value = true
     errorMessage.value = ""
     setResults([])
     setErrors([])
-
     try {
       const data = await analyzeBatch(
         lines,
@@ -60,49 +55,56 @@ export function BatchPage() {
   }
 
   return (
-    <>
-      <section class="text-center mb-6">
-        <h1 class="text-3xl mb-2">Batch Analysis</h1>
-        <p class="text-base text-fg-2 mb-5">
-          Paste up to 50 URLs (one per line) for comparison.
-        </p>
-        <div class="max-w-[650px] mx-auto flex flex-col gap-3">
-          <textarea
-            id="batchUrls"
-            value={urls}
-            onInput={(e) => setUrls((e.target as HTMLTextAreaElement).value)}
-            class="w-full px-3.5 py-2.5 bg-input border border-border rounded-lg text-fg text-base focus:outline-none focus:border-accent resize-vertical min-h-[200px]"
-            rows={10}
-            placeholder="https://example.com/offer1&#10;https://example.com/offer2&#10;..."
-          />
-          <button
-            id="batchAnalyzeBtn"
-            type="button"
-            onClick={handleAnalyze}
-            disabled={isLoading.value}
-            class="px-7 py-3.5 bg-accent text-white rounded-lg font-medium inline-flex items-center gap-1.5 hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed border-none cursor-pointer"
-          >
-            🔍 Analyze All
-          </button>
-        </div>
-      </section>
+    <div>
+      <div class="mb-6">
+        <h1 class="text-2xl font-bold tracking-tight">Batch Analysis</h1>
+        <p class="text-sm text-fg-2 mt-1">Paste up to 50 URLs, one per line.</p>
+      </div>
+
+      <div class="flex flex-col gap-3 max-w-[700px]">
+        <textarea
+          id="batchUrls"
+          value={urls}
+          onInput={(e) => setUrls((e.target as HTMLTextAreaElement).value)}
+          class="w-full px-4 py-3 bg-input border border-border rounded-xl text-fg text-sm
+            focus:outline-none focus:border-accent transition-colors resize-vertical min-h-[200px]"
+          rows={10}
+          placeholder={`https://example.com/landing-page-1\nhttps://example.com/landing-page-2\n...`}
+        />
+        <button
+          type="button"
+          onClick={handleAnalyze}
+          disabled={isLoading.value}
+          class="btn-glow px-8 py-3.5 text-white rounded-xl font-semibold text-sm
+            inline-flex items-center justify-center gap-2 disabled:opacity-50
+            disabled:cursor-not-allowed border-none cursor-pointer self-start"
+        >
+          {isLoading.value
+            ? (
+              <span class="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            )
+            : (
+              "🔍 Analyze All"
+            )}
+        </button>
+      </div>
 
       {isLoading.value && (
-        <div class="text-center py-10">
-          <div class="spinner mb-4" />
-          <p>Analyzing pages... (2-5s each)</p>
+        <div class="text-center py-12">
+          <div class="spinner" />
+          <p class="text-sm text-fg-2">Analyzing pages... (2–5s each)</p>
         </div>
       )}
 
       {errorMessage.value && (
-        <div class="bg-red/10 border border-red rounded-lg p-4 my-4 mx-auto max-w-[650px] text-center">
-          <p>{errorMessage.value}</p>
+        <div class="glass rounded-xl p-5 mt-6 max-w-[700px] text-center">
+          <p class="text-red font-medium text-sm">{errorMessage.value}</p>
         </div>
       )}
 
       {(results.length > 0 || errors.length > 0) && (
         <BatchResults results={results} errors={errors} />
       )}
-    </>
+    </div>
   )
 }

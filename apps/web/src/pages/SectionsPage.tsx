@@ -1,4 +1,4 @@
-// Custom sections management page
+// Custom sections management
 import { useEffect, useState } from "preact/hooks"
 import {
   createSection,
@@ -24,11 +24,8 @@ export function SectionsPage() {
   async function loadSections() {
     setLoading(true)
     try {
-      const data = await fetchSections()
-      setSections(data.sections)
-    } catch {
-      // silently fail
-    }
+      setSections((await fetchSections()).sections)
+    } catch { /* */ }
     setLoading(false)
   }
 
@@ -76,37 +73,38 @@ export function SectionsPage() {
   }
 
   return (
-    <section class="max-w-[650px] mx-auto">
-      <h1 class="text-2xl font-bold mb-1">Custom Sections</h1>
-      <p class="text-sm text-fg-2 mb-6">
-        Define custom questions for the AI to answer about each landing page. These appear below
-        standard analysis results when selected.
-      </p>
+    <div class="max-w-[700px]">
+      <div class="mb-6">
+        <h1 class="text-2xl font-bold tracking-tight">Custom Sections</h1>
+        <p class="text-sm text-fg-2 mt-1">
+          Define custom questions for the AI to answer about each landing page.
+        </p>
+      </div>
 
       {/* Form */}
-      <form onSubmit={handleSave} class="bg-card border border-border rounded-lg p-4 mb-6">
-        <h3 class="text-base font-semibold mb-3">
-          {editingId ? "Edit Section" : "New Section"}
-        </h3>
+      <form onSubmit={handleSave} class="glass rounded-2xl p-5 sm:p-6 mb-5">
+        <h3 class="text-base font-semibold mb-3">{editingId ? "Edit" : "New"} Section</h3>
         <div class="flex flex-col gap-3">
           <div>
-            <label class="text-xs text-fg-2 block mb-1">Title</label>
+            <label class="text-xs font-medium text-fg-2 mb-1 block">Title</label>
             <input
               type="text"
               value={title}
               onInput={(e) => setTitle((e.target as HTMLInputElement).value)}
-              class="w-full px-3 py-2 bg-input border border-border rounded-lg text-sm focus:outline-none focus:border-accent"
+              class="w-full px-3 py-2.5 bg-input border border-border rounded-xl text-sm
+                focus:outline-none focus:border-accent transition-colors"
               placeholder="e.g., Competitor Analysis"
               required
             />
           </div>
           <div>
-            <label class="text-xs text-fg-2 block mb-1">Prompt</label>
+            <label class="text-xs font-medium text-fg-2 mb-1 block">Prompt</label>
             <textarea
               value={prompt}
               onInput={(e) => setPrompt((e.target as HTMLTextAreaElement).value)}
-              class="w-full px-3 py-2 bg-input border border-border rounded-lg text-sm focus:outline-none focus:border-accent min-h-[80px]"
-              placeholder="e.g., What specific competitors are mentioned on this page and how do they compare?"
+              class="w-full px-3 py-2.5 bg-input border border-border rounded-xl text-sm
+                focus:outline-none focus:border-accent transition-colors min-h-[90px] resize-vertical"
+              placeholder="e.g., What specific competitors are mentioned on this page?"
               required
             />
           </div>
@@ -114,7 +112,8 @@ export function SectionsPage() {
             <button
               type="submit"
               disabled={saving || !title.trim() || !prompt.trim()}
-              class="px-4 py-2 bg-accent text-white rounded-lg font-medium text-sm hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed border-none cursor-pointer"
+              class="btn-glow px-4 py-2 text-white rounded-xl font-semibold text-sm
+                border-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {saving ? "Saving..." : editingId ? "Update" : "Create"}
             </button>
@@ -122,7 +121,8 @@ export function SectionsPage() {
               <button
                 type="button"
                 onClick={resetForm}
-                class="px-4 py-2 bg-input border border-border rounded-lg text-sm hover:bg-border cursor-pointer"
+                class="px-4 py-2 rounded-xl border border-border text-sm hover:bg-input/50
+                  cursor-pointer bg-transparent transition-colors"
               >
                 Cancel
               </button>
@@ -133,46 +133,42 @@ export function SectionsPage() {
 
       {/* List */}
       {loading
-        ? <p class="text-sm text-fg-2">Loading sections...</p>
+        ? <p class="text-sm text-fg-2">Loading...</p>
         : sections.length === 0
-        ? (
-          <div class="bg-card border border-border rounded-lg p-4 text-sm text-fg-2">
-            No custom sections yet. Create one above.
-          </div>
-        )
+        ? <div class="glass rounded-xl p-4 text-sm text-fg-2">No sections yet.</div>
         : (
           <div class="flex flex-col gap-2">
             {sections.map((s) => (
               <div
                 key={s.id}
-                class="bg-card border border-border rounded-lg px-4 py-3"
+                class="glass rounded-xl px-4 py-3 flex flex-col sm:flex-row sm:items-start justify-between gap-2"
               >
-                <div class="flex items-start justify-between mb-1">
-                  <div>
-                    <span class="font-medium text-sm">{s.title}</span>
-                  </div>
-                  <div class="flex gap-2 shrink-0 ml-2">
-                    <button
-                      type="button"
-                      onClick={() => startEdit(s)}
-                      class="text-xs px-2 py-1 bg-input border border-border rounded-lg hover:bg-border cursor-pointer"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(s.id, s.title)}
-                      class="text-xs px-2 py-1 bg-red/10 border border-red/30 text-red rounded-lg hover:bg-red/20 cursor-pointer"
-                    >
-                      Delete
-                    </button>
-                  </div>
+                <div class="flex-1 min-w-0">
+                  <p class="font-semibold text-sm">{s.title}</p>
+                  <p class="text-xs text-fg-2 mt-0.5 line-clamp-2">{s.prompt}</p>
                 </div>
-                <p class="text-xs text-fg-2">{s.prompt}</p>
+                <div class="flex gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => startEdit(s)}
+                    class="text-xs px-3 py-1.5 rounded-lg border border-border hover:bg-input/50
+                      cursor-pointer bg-transparent transition-colors"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(s.id, s.title)}
+                    class="text-xs px-3 py-1.5 rounded-lg border border-red/30 text-red
+                      hover:bg-red/10 cursor-pointer bg-transparent transition-colors"
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
             ))}
           </div>
         )}
-    </section>
+    </div>
   )
 }

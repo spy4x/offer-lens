@@ -15,70 +15,78 @@ export function AnalysisPage({ id }: Props) {
   useEffect(() => {
     setLoading(true)
     setError("")
-    setData(null)
-
-    fetchAnalysisById(id).then((res) => {
-      setData(res)
-    }).catch((err) => {
-      setError(err instanceof Error ? err.message : "Failed to load analysis")
-    }).finally(() => {
-      setLoading(false)
-    })
+    fetchAnalysisById(id).then(setData).catch((err) =>
+      setError(err instanceof Error ? err.message : "Failed to load")
+    ).finally(() => setLoading(false))
   }, [id])
-
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText(globalThis.location.href).then(() => {
-      showToast("Link copied!", "success")
-    })
-  }
 
   if (loading) {
     return (
-      <section class="mt-6">
-        <div class="text-center py-10 text-fg-2">Loading analysis...</div>
-      </section>
+      <div class="text-center py-20">
+        <div class="spinner" />
+        <p class="text-sm text-fg-2">Loading analysis...</p>
+      </div>
     )
   }
 
-  if (error) {
+  if (error || !data) {
     return (
-      <section class="mt-6">
-        <div class="bg-red/10 border border-red rounded-lg p-4 text-center">
-          <h1 class="text-xl mb-2">Analysis Not Found</h1>
-          <p class="text-fg-2 text-sm">{error}</p>
-        </div>
-      </section>
+      <div class="glass rounded-xl p-8 text-center max-w-md mx-auto mt-10">
+        <h1 class="text-xl font-bold mb-2">Analysis Not Found</h1>
+        <p class="text-sm text-fg-2">{error || "Unknown error"}</p>
+      </div>
     )
   }
-
-  if (!data) return null
 
   return (
-    <section class="mt-6">
-      <div class="mb-4">
-        <div class="flex items-center justify-between gap-2">
-          <h1 class="text-xl font-semibold truncate">{data.url}</h1>
-          <button
-            type="button"
-            onClick={handleCopyLink}
-            class="text-xs px-2.5 py-1 bg-accent text-white rounded-lg font-medium inline-flex items-center gap-1 hover:bg-accent-hover border-none cursor-pointer shrink-0"
+    <div>
+      {/* Header bar */}
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+        <div class="min-w-0 flex-1">
+          <h1 class="text-xl font-bold tracking-tight truncate">{data.url}</h1>
+          <div class="flex items-center gap-3 mt-1 text-xs text-fg-2">
+            <span>
+              {new Date(data.createdAt).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </span>
+            {data.tokensUsed && data.tokensUsed.totalTokens > 0 && (
+              <span class="px-2 py-0.5 rounded-full bg-input/50">
+                ~{data.tokensUsed.totalTokens.toLocaleString()} tokens
+              </span>
+            )}
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() =>
+            navigator.clipboard.writeText(globalThis.location.href).then(() =>
+              showToast("Link copied!", "success")
+            )}
+          class="btn-glow px-5 py-2.5 text-white rounded-xl font-semibold text-sm
+            inline-flex items-center gap-2 border-none cursor-pointer shrink-0"
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
           >
-            Share
-          </button>
-        </div>
-        <div class="flex items-center gap-3 mt-1">
-          <p class="text-xs text-fg-2">
-            {new Date(data.createdAt).toLocaleDateString()}
-          </p>
-          {data.tokensUsed && data.tokensUsed.totalTokens > 0 && (
-            <p class="text-xs text-fg-2">
-              ~{data.tokensUsed.totalTokens} tokens
-            </p>
-          )}
-        </div>
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+            <polyline points="15 3 21 3 21 9" />
+            <line x1="10" y1="14" x2="21" y2="3" />
+          </svg>
+          Share
+        </button>
       </div>
 
       <AnalysisResults analysis={data.analysis} />
-    </section>
+    </div>
   )
 }
