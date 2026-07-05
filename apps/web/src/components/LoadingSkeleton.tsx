@@ -1,26 +1,36 @@
+import { Icon } from "./Icon.tsx"
+
 export function LoadingSkeleton() {
   return (
-    <div class="mt-6 animate-pulse space-y-6">
-      <div>
-        <div class="skeleton h-5 w-40 mb-3" />
-        <div class="skeleton h-28 w-full rounded-xl" />
+    <div class="mt-8 space-y-3">
+      <div class="card p-5 flex items-center gap-4">
+        <div class="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-accent-subtle text-accent border border-accent/20">
+          <Icon name="sparkle" size={18} class="animate-pulse" />
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="skeleton h-4 w-48 mb-2" />
+          <div class="skeleton h-3 w-32" />
+        </div>
       </div>
-      <div>
-        <div class="skeleton h-5 w-32 mb-3" />
-        <div class="skeleton h-4 w-full mb-2.5" />
-        <div class="skeleton h-4 w-3/4 mb-2.5" />
-        <div class="skeleton h-4 w-5/6" />
-      </div>
-      <div>
-        <div class="skeleton h-5 w-36 mb-3" />
-        <div class="skeleton h-24 w-full rounded-xl" />
-      </div>
-      <div>
-        <div class="skeleton h-5 w-24 mb-3" />
-        <div class="skeleton h-12 w-full rounded-xl mb-3" />
-        <div class="skeleton h-32 w-full rounded-xl" />
-      </div>
-      <p class="text-center text-sm text-fg-3 pt-2">Analyzing page... (2–5s)</p>
+
+      {[1, 2, 3].map((i) => (
+        <div key={i} class="card p-5 sm:p-6">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="skeleton w-8 h-8 rounded-lg shrink-0" />
+            <div class="skeleton h-4 w-32" />
+          </div>
+          <div class="space-y-2.5">
+            <div class="skeleton h-4 w-full" />
+            <div class="skeleton h-4 w-5/6" />
+            <div class="skeleton h-4 w-2/3" />
+          </div>
+        </div>
+      ))}
+
+      <p class="text-center text-sm text-fg-3 pt-3 inline-flex items-center gap-2 mx-auto justify-center w-full">
+        <span class="live-dot" />
+        Analyzing page · usually 3–5 seconds
+      </p>
     </div>
   )
 }

@@ -2,6 +2,7 @@ import { useEffect, useState } from "preact/hooks"
 import { analyzeBatch, type BatchResult, fetchSections, fetchUsage } from "../lib/api.ts"
 import { authToken, demoUsage, errorMessage, isLoading } from "../lib/state.ts"
 import { BatchResults } from "../components/BatchResults.tsx"
+import { Icon } from "../components/Icon.tsx"
 
 export function BatchPage() {
   const [urls, setUrls] = useState("")
@@ -54,51 +55,67 @@ export function BatchPage() {
     }
   }
 
+  const urlCount = urls.split("\n").filter((u) => u.trim()).length
+
   return (
-    <div>
-      <div class="mb-6">
-        <h1 class="text-2xl font-bold tracking-tight">Batch Analysis</h1>
-        <p class="text-sm text-fg-2 mt-1">Paste up to 50 URLs, one per line.</p>
+    <div class="max-w-[760px] space-y-5 fade-up">
+      <div class="flex items-center gap-3">
+        <span class="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-accent-subtle text-accent border border-accent/20">
+          <Icon name="package" size={18} />
+        </span>
+        <div>
+          <h1 class="text-xl font-bold tracking-tight">Batch analysis</h1>
+          <p class="text-xs text-fg-3">Up to 50 URLs · one per line</p>
+        </div>
       </div>
 
-      <div class="flex flex-col gap-3 max-w-[700px]">
-        <textarea
-          id="batchUrls"
-          value={urls}
-          onInput={(e) => setUrls((e.target as HTMLTextAreaElement).value)}
-          class="w-full px-4 py-3 bg-input border border-border rounded-xl text-fg text-sm
-            focus:outline-none focus:border-accent transition-colors resize-vertical min-h-[200px]"
-          rows={10}
-          placeholder={`https://example.com/landing-page-1\nhttps://example.com/landing-page-2\n...`}
-        />
-        <button
-          type="button"
-          onClick={handleAnalyze}
-          disabled={isLoading.value}
-          class="btn-glow px-8 py-3.5 text-white rounded-xl font-semibold text-sm
-            inline-flex items-center justify-center gap-2 disabled:opacity-50
-            disabled:cursor-not-allowed border-none cursor-pointer self-start"
-        >
-          {isLoading.value
-            ? (
-              <span class="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-            )
-            : (
-              "🔍 Analyze All"
+      <div class="card p-5 sm:p-6">
+        <label class="label">URLs</label>
+        <div class="relative">
+          <textarea
+            value={urls}
+            onInput={(e) => setUrls((e.target as HTMLTextAreaElement).value)}
+            class="textarea font-mono text-sm"
+            rows={10}
+            placeholder={`https://example.com/landing-1\nhttps://example.com/landing-2\nhttps://example.com/landing-3`}
+          />
+          <div class="absolute bottom-3 right-3 text-xs text-fg-3 nums bg-card border border-border rounded px-2 py-0.5 pointer-events-none">
+            {urlCount} / 50
+          </div>
+        </div>
+
+        <div class="mt-4 flex items-center justify-between gap-3 flex-wrap">
+          <p class="text-xs text-fg-3">
+            URLs are processed in parallel · ~3–5s each
+          </p>
+          <button
+            type="button"
+            onClick={handleAnalyze}
+            disabled={isLoading.value || urlCount === 0}
+            class="btn-primary px-5 py-2.5"
+          >
+            {isLoading.value ? <span class="spinner" /> : (
+              <>
+                <Icon name="zap" size={14} />
+                Analyze all
+              </>
             )}
-        </button>
+          </button>
+        </div>
       </div>
 
       {isLoading.value && (
-        <div class="text-center py-12">
-          <div class="spinner" />
-          <p class="text-sm text-fg-2">Analyzing pages... (2–5s each)</p>
+        <div class="text-center py-10 fade-up">
+          <div class="spinner-lg mx-auto mb-3" />
+          <p class="text-sm text-fg-2">Analyzing pages…</p>
+          <p class="text-xs text-fg-3 mt-1">3–5 seconds per page</p>
         </div>
       )}
 
       {errorMessage.value && (
-        <div class="glass rounded-xl p-5 mt-6 max-w-[700px] text-center">
-          <p class="text-red font-medium text-sm">{errorMessage.value}</p>
+        <div class="card p-4 border-red/30 bg-red-subtle flex items-start gap-3">
+          <Icon name="alert" size={16} class="text-red shrink-0 mt-0.5" />
+          <p class="text-sm text-red">{errorMessage.value}</p>
         </div>
       )}
 
