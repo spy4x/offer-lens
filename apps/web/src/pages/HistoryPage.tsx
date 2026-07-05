@@ -13,85 +13,113 @@ export function HistoryPage() {
       setLoading(false)
       return
     }
-
-    fetchHistory().then((res) => {
-      setAnalyses(res.analyses)
-    }).catch((err) => {
+    fetchHistory().then((res) => setAnalyses(res.analyses)).catch((err) =>
       setError(err instanceof Error ? err.message : "Failed to load history")
-    }).finally(() => {
-      setLoading(false)
-    })
+    ).finally(() => setLoading(false))
   }, [])
-
-  const handleViewAnalysis = (id: number) => {
-    history.pushState(null, "", `/analyses/${id}`)
-    dispatchEvent(new PopStateEvent("popstate"))
-  }
-
-  const handleCopyUrl = (url: string) => {
-    navigator.clipboard.writeText(url).then(() => {
-      showToast("URL copied", "success")
-    })
-  }
 
   if (loading) {
     return (
-      <section class="mt-6">
-        <h1 class="text-2xl mb-4">Analysis History</h1>
-        <div class="text-center py-10 text-fg-2">Loading...</div>
-      </section>
+      <div class="text-center py-20 text-fg-2">
+        <div class="spinner" />
+        <p class="text-sm">Loading history...</p>
+      </div>
     )
   }
 
   if (error) {
     return (
-      <section class="mt-6">
-        <h1 class="text-2xl mb-4">Analysis History</h1>
-        <div class="bg-red/10 border border-red rounded-lg p-4 text-center">{error}</div>
-        <p class="text-center mt-4">
-          <a href="/login" class="text-accent">Login</a>
-        </p>
-      </section>
+      <div class="glass rounded-xl p-8 text-center max-w-md mx-auto mt-10">
+        <p class="text-red font-medium mb-3">{error}</p>
+        <a href="/login" class="text-accent font-medium text-sm">Login to view your analyses →</a>
+      </div>
     )
   }
 
   return (
-    <section class="mt-6">
-      <h1 class="text-2xl mb-4">Analysis History</h1>
-
-      {analyses.length === 0 && <p class="text-center text-fg-2 py-10">No analyses yet.</p>}
-
-      <div class="flex flex-col gap-2">
-        {analyses.map((a) => (
-          <div
-            key={a.id}
-            class="bg-card border border-border rounded-lg px-4 py-3 flex items-center justify-between cursor-pointer hover:bg-input/30"
-            onClick={() => handleViewAnalysis(a.id)}
-          >
-            <div class="flex-1 min-w-0">
-              <p class="text-sm font-medium truncate">{a.url}</p>
-              <p class="text-xs text-fg-2">
-                {new Date(a.createdAt).toLocaleDateString()}
-                {a.primaryAngle && (
-                  <span class="ml-2 bg-accent/20 text-accent px-1.5 py-0.5 rounded text-xs">
-                    {a.primaryAngle}
-                  </span>
-                )}
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation()
-                handleCopyUrl(a.url)
-              }}
-              class="text-xs px-2.5 py-1 bg-accent text-white rounded-lg font-medium hover:bg-accent-hover border-none cursor-pointer ml-3 shrink-0"
-            >
-              Copy URL
-            </button>
-          </div>
-        ))}
+    <div>
+      <div class="mb-6">
+        <h1 class="text-2xl font-bold tracking-tight">Analysis History</h1>
+        <p class="text-sm text-fg-2 mt-1">{analyses.length} analyses</p>
       </div>
-    </section>
+
+      {analyses.length === 0
+        ? (
+          <div class="glass rounded-xl p-10 text-center text-fg-2">
+            No analyses yet. Paste a URL on the home page to get started.
+          </div>
+        )
+        : (
+          <div class="table-wrap">
+            <table class="w-full border-collapse">
+              <thead>
+                <tr class="border-b border-border text-left text-xs font-medium text-fg-3 uppercase tracking-wider">
+                  <th class="px-3 py-2.5">URL</th>
+                  <th class="px-3 py-2.5 hidden sm:table-cell">Date</th>
+                  <th class="px-3 py-2.5">Angle</th>
+                  <th class="px-3 py-2.5 hidden md:table-cell">Conf.</th>
+                  <th class="px-3 py-2.5 hidden lg:table-cell">Top Hook</th>
+                  <th class="px-3 py-2.5"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {analyses.map((a) => (
+                  <tr
+                    key={a.id}
+                    class="border-b border-border/50 cursor-pointer hover:bg-accent-subtle transition-colors text-sm"
+                    onClick={() => {
+                      history.pushState(null, "", `/analyses/${a.id}`)
+                      dispatchEvent(new PopStateEvent("popstate"))
+                    }}
+                  >
+                    <td class="px-3 py-3 text-xs break-all max-w-[180px] truncate block sm:table-cell">
+                      {esc(a.url)}
+                    </td>
+                    <td class="px-3 py-3 text-xs text-fg-2 whitespace-nowrap hidden sm:table-cell">
+                      {new Date(a.createdAt).toLocaleDateString()}
+                    </td>
+                    <td class="px-3 py-3">
+                      {a.primaryAngle
+                        ? (
+                          <span class="bg-accent/15 text-accent px-2 py-0.5 rounded-md text-xs font-semibold uppercase">
+                            {esc(a.primaryAngle)}
+                          </span>
+                        )
+                        : <span class="text-fg-3 text-xs">—</span>}
+                    </td>
+                    <td class="px-3 py-3 text-xs text-green font-semibold hidden md:table-cell">
+                      {a.confidence != null ? `${a.confidence}%` : "—"}
+                    </td>
+                    <td class="px-3 py-3 text-xs text-fg-2 max-w-[160px] truncate hidden lg:table-cell">
+                      {esc(a.topHook || "") || "—"}
+                    </td>
+                    <td class="px-3 py-3 text-right">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          navigator.clipboard.writeText(
+                            globalThis.location.origin + `/analyses/${a.id}`,
+                          ).then(() => showToast("Share link copied!", "success"))
+                        }}
+                        class="text-xs px-3 py-1.5 rounded-lg font-medium border border-accent/30
+                          text-accent hover:bg-accent/10 transition-colors cursor-pointer bg-transparent"
+                      >
+                        Share
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+    </div>
   )
+}
+
+function esc(str: unknown): string {
+  if (!str) return ""
+  return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
 }

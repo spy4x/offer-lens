@@ -20,8 +20,5 @@ deno.lock
 dist/
 apps/ext/build/
 
-# Generated CSS (compiled by Tailwind CLI)
-apps/web/src/tailwind.css
-
 # Playwright MCP artifacts
 .playwright-mcp/

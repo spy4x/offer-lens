@@ -7,11 +7,8 @@ WORKDIR /build
 # Copy config for dependency caching
 COPY deno.jsonc ./
 
-# Copy SPA source
+# Copy SPA source (tailwind.css is pre-compiled and committed)
 COPY apps/web/ ./apps/web/
-
-# Pre-compile TailwindCSS v4 CSS
-RUN deno run -A npm:@tailwindcss/cli@^4 -i apps/web/src/style.css -o apps/web/src/tailwind.css 2>/dev/null || true
 
 # Pre-cache Vite deps (tolerate failure)
 RUN deno cache npm:vite@^6 npm:@preact/preset-vite@^2 2>/dev/null || true

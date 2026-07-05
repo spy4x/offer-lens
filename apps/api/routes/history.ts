@@ -18,12 +18,21 @@ export const historyRoute = new Hono()
       const items = rows.map((r) => {
         // Handle double-encoded JSON
         const analysisData = typeof r.analysis === "string" ? JSON.parse(r.analysis) : r.analysis
+        const ad = analysisData as {
+          primaryAngle?: { type: string; confidence: number }
+          hookIdeas?: string[]
+          conversionBlockers?: Array<{ issue: string }>
+          customSections?: Array<{ title: string }>
+        }
         return {
           id: r.id,
           url: r.url,
           createdAt: r.created_at.toISOString(),
-          primaryAngle: (analysisData as { primaryAngle?: { type: string } })?.primaryAngle?.type ||
-            null,
+          primaryAngle: ad?.primaryAngle?.type || null,
+          confidence: ad?.primaryAngle?.confidence ?? null,
+          topHook: ad?.hookIdeas?.[0] || null,
+          topBlocker: ad?.conversionBlockers?.[0]?.issue || null,
+          hasCustomSections: (ad?.customSections?.length ?? 0) > 0,
         }
       })
 

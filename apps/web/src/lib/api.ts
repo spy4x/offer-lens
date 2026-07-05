@@ -203,6 +203,10 @@ export interface AnalysisSummary {
   url: string
   createdAt: string
   primaryAngle: string | null
+  confidence: number | null
+  topHook: string | null
+  topBlocker: string | null
+  hasCustomSections: boolean
 }
 
 export async function fetchHistory(): Promise<{ analyses: AnalysisSummary[] }> {

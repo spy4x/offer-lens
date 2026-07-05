@@ -8,17 +8,21 @@ export function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
 
+  const navTo = (p: string) => (e: Event) => {
+    e.preventDefault()
+    history.pushState(null, "", p)
+    dispatchEvent(new PopStateEvent("popstate"))
+  }
+
   const handleSubmit = async (e: Event) => {
     e.preventDefault()
     if (!email || !password) return
     setLoading(true)
     setError("")
-
     try {
       const res = await login(email, password)
       setAuth(res.token, res.user)
-      showToast("Logged in!", "success")
-      // Redirect home
+      showToast("Welcome back!", "success")
       history.pushState(null, "", "/")
       dispatchEvent(new PopStateEvent("popstate"))
     } catch (err) {
@@ -29,53 +33,57 @@ export function LoginPage() {
   }
 
   return (
-    <section class="max-w-[400px] mx-auto mt-10">
-      <h1 class="text-2xl text-center mb-6">Login</h1>
+    <div class="max-w-[420px] mx-auto mt-10 sm:mt-16">
+      <div class="glass rounded-2xl p-6 sm:p-8">
+        <h1 class="text-2xl font-bold tracking-tight text-center mb-1">Welcome back</h1>
+        <p class="text-sm text-fg-2 text-center mb-6">Sign in to access your analyses</p>
 
-      <form onSubmit={handleSubmit} class="flex flex-col gap-4">
-        <input
-          type="email"
-          value={email}
-          onInput={(e) => setEmail((e.target as HTMLInputElement).value)}
-          placeholder="Email"
-          required
-          class="w-full px-4 py-3 bg-input border border-border rounded-lg text-fg focus:outline-none focus:border-accent"
-        />
-        <input
-          type="password"
-          value={password}
-          onInput={(e) => setPassword((e.target as HTMLInputElement).value)}
-          placeholder="Password"
-          required
-          minLength={6}
-          class="w-full px-4 py-3 bg-input border border-border rounded-lg text-fg focus:outline-none focus:border-accent"
-        />
+        <form onSubmit={handleSubmit} class="flex flex-col gap-4">
+          <div>
+            <label class="text-xs font-medium text-fg-2 mb-1 block">Email</label>
+            <input
+              type="email"
+              value={email}
+              onInput={(e) => setEmail((e.target as HTMLInputElement).value)}
+              placeholder="you@example.com"
+              required
+              class="w-full px-4 py-3 bg-input border border-border rounded-xl text-fg text-sm
+                focus:outline-none focus:border-accent transition-colors"
+            />
+          </div>
+          <div>
+            <label class="text-xs font-medium text-fg-2 mb-1 block">Password</label>
+            <input
+              type="password"
+              value={password}
+              onInput={(e) => setPassword((e.target as HTMLInputElement).value)}
+              placeholder="••••••"
+              required
+              minLength={6}
+              class="w-full px-4 py-3 bg-input border border-border rounded-xl text-fg text-sm
+                focus:outline-none focus:border-accent transition-colors"
+            />
+          </div>
 
-        {error && <p class="text-sm text-red text-center">{error}</p>}
+          {error && <p class="text-sm text-red text-center font-medium">{error}</p>}
 
-        <button
-          type="submit"
-          disabled={loading}
-          class="w-full py-3 bg-accent text-white rounded-lg font-medium hover:bg-accent-hover disabled:opacity-50 border-none cursor-pointer"
-        >
-          {loading ? "Logging in..." : "Login"}
-        </button>
-      </form>
+          <button
+            type="submit"
+            disabled={loading}
+            class="btn-glow w-full py-3 text-white rounded-xl font-semibold text-sm
+              border-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? "Signing in..." : "Sign in"}
+          </button>
+        </form>
 
-      <p class="text-sm text-fg-2 text-center mt-4">
-        Don't have an account?{" "}
-        <a
-          href="/register"
-          class="text-accent"
-          onClick={(e) => {
-            e.preventDefault()
-            history.pushState(null, "", "/register")
-            dispatchEvent(new PopStateEvent("popstate"))
-          }}
-        >
-          Register
-        </a>
-      </p>
-    </section>
+        <p class="text-sm text-fg-2 text-center mt-5">
+          No account?{" "}
+          <a href="/register" onClick={navTo("/register")} class="text-accent font-medium">
+            Create one
+          </a>
+        </p>
+      </div>
+    </div>
   )
 }

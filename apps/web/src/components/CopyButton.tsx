@@ -15,13 +15,12 @@ export function CopyButton(props: CopyButtonProps) {
     }
     showToast("Copied!", "success")
   }
-
   return (
     <button
       type="button"
       onClick={handleCopy}
       class={props.class ||
-        "bg-transparent border-none cursor-pointer px-1.5 py-0.5 text-sm text-fg-2 rounded hover:bg-input hover:text-fg"}
+        "bg-transparent border-none cursor-pointer px-1.5 py-0.5 text-sm text-fg-3 rounded hover:bg-input/50 hover:text-fg transition-colors"}
       title="Copy"
     >
       {props.label || "📋"}
