@@ -1,4 +1,5 @@
 import type { BatchResult } from "../lib/api.ts"
+import { Icon } from "./Icon.tsx"
 
 interface Props {
   results: BatchResult[]
@@ -12,66 +13,73 @@ export function BatchResults({ results, errors }: Props) {
   }
 
   return (
-    <section class="mt-8">
-      <h2 class="text-lg font-bold tracking-tight mb-3 flex items-center gap-2">
-        📦 Batch Results
-        {results.length > 0 && (
-          <span class="text-xs font-normal text-fg-2 bg-input/50 px-2 py-0.5 rounded-full">
-            {results.length} analyzed
+    <section class="mt-8 space-y-4">
+      <div class="flex items-center justify-between flex-wrap gap-3">
+        <div class="flex items-center gap-3">
+          <span class="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-accent-subtle text-accent border border-accent/20">
+            <Icon name="package" size={16} />
           </span>
-        )}
-      </h2>
+          <div>
+            <h2 class="text-lg font-bold tracking-tight">Batch results</h2>
+            <p class="text-xs text-fg-3">
+              {results.length} analyzed · {errors.length} failed
+            </p>
+          </div>
+        </div>
+      </div>
 
       {results.length > 0 && (
-        <div class="table-wrap glass rounded-xl">
-          <table class="w-full border-collapse">
+        <div class="table-wrap">
+          <table class="table">
             <thead>
-              <tr class="border-b border-border/50 text-left text-xs font-medium text-fg-3 uppercase tracking-wider">
-                <th class="px-3 py-2.5">URL</th>
-                <th class="px-3 py-2.5">Angle</th>
-                <th class="px-3 py-2.5 hidden sm:table-cell">Conf.</th>
-                <th class="px-3 py-2.5 hidden md:table-cell">Top Hook</th>
-                <th class="px-3 py-2.5 hidden lg:table-cell">Top Blocker</th>
-                <th class="px-3 py-2.5 hidden md:table-cell text-center">Custom</th>
+              <tr>
+                <th>URL</th>
+                <th>Angle</th>
+                <th class="hidden sm:table-cell">Conf.</th>
+                <th class="hidden md:table-cell">Top hook</th>
+                <th class="hidden lg:table-cell">Top blocker</th>
+                <th class="hidden md:table-cell text-center">Custom</th>
               </tr>
             </thead>
             <tbody>
               {results.map((r, i) => {
                 const a = r.analysis
+                const conf = a?.primaryAngle?.confidence ?? 0
                 return (
-                  <tr
-                    key={i}
-                    class="border-b border-border/30 text-sm cursor-pointer hover:bg-accent-subtle transition-colors"
-                    onClick={() => r.id ? goToAnalysis(r.id) : undefined}
-                  >
-                    <td class="text-xs break-all text-fg px-3 py-3 max-w-[180px] truncate block sm:table-cell">
-                      {esc(r.url)}
+                  <tr key={i} onClick={() => r.id ? goToAnalysis(r.id) : undefined}>
+                    <td>
+                      <span class="font-mono text-xs text-fg-2 truncate block max-w-[200px]">
+                        {host(r.url)}
+                      </span>
                     </td>
-                    <td class="px-3 py-3">
-                      <span class="bg-accent/15 text-accent px-2 py-0.5 rounded-md text-xs font-semibold uppercase">
+                    <td>
+                      <span class="badge badge-accent">
                         {esc(a?.primaryAngle?.type || "?")}
                       </span>
                     </td>
-                    <td class="px-3 py-3 text-green font-semibold text-xs hidden sm:table-cell">
-                      {a?.primaryAngle?.confidence ?? 0}%
+                    <td class="hidden sm:table-cell">
+                      <div class="flex items-center gap-2">
+                        <span class="text-sm font-semibold text-green nums">{conf}%</span>
+                      </div>
                     </td>
-                    <td class="text-xs text-fg-2 px-3 py-3 max-w-[160px] truncate hidden md:table-cell">
-                      {esc(a?.hookIdeas?.[0] || "") || "—"}
+                    <td class="hidden md:table-cell">
+                      <span class="text-xs text-fg-2 truncate block max-w-[200px]">
+                        {esc(a?.hookIdeas?.[0] || "") || "—"}
+                      </span>
                     </td>
-                    <td class="px-3 py-3 text-xs text-fg-2 max-w-[160px] truncate hidden lg:table-cell">
-                      {esc(a?.conversionBlockers?.[0]?.issue || "") || "—"}
+                    <td class="hidden lg:table-cell">
+                      <span class="text-xs text-fg-2 truncate block max-w-[200px]">
+                        {esc(a?.conversionBlockers?.[0]?.issue || "") || "—"}
+                      </span>
                     </td>
-                    <td class="px-3 py-3 text-center hidden md:table-cell">
+                    <td class="hidden md:table-cell text-center">
                       {a?.customSections?.length
                         ? (
-                          <span
-                            class="text-xs text-accent font-semibold"
-                            title={`${a.customSections.length} custom sections`}
-                          >
+                          <span class="text-xs font-semibold text-accent nums">
                             +{a.customSections.length}
                           </span>
                         )
-                        : <span class="text-fg-3 text-xs">—</span>}
+                        : <span class="text-xs text-fg-3">—</span>}
                     </td>
                   </tr>
                 )
@@ -82,12 +90,19 @@ export function BatchResults({ results, errors }: Props) {
       )}
 
       {errors.length > 0 && (
-        <div class="mt-4">
-          <p class="text-sm font-medium text-red mb-2">{errors.length} failed</p>
-          <ul class="space-y-1 text-xs">
+        <div class="card p-5 border-red/30 bg-red-subtle">
+          <div class="flex items-center gap-2 mb-3">
+            <Icon name="alert" size={14} class="text-red" />
+            <p class="font-semibold text-sm text-red">
+              {errors.length} {errors.length === 1 ? "URL failed" : "URLs failed"}
+            </p>
+          </div>
+          <ul class="space-y-1.5">
             {errors.map((e, i) => (
-              <li key={i} class="text-fg-2">
-                <span class="text-red font-medium">{esc(e.url)}</span>: {esc(e.error)}
+              <li key={i} class="text-xs text-fg-2 flex items-start gap-2">
+                <span class="font-mono text-red shrink-0 max-w-[200px] truncate">{esc(e.url)}</span>
+                <span class="text-fg-3">·</span>
+                <span>{esc(e.error)}</span>
               </li>
             ))}
           </ul>
@@ -97,8 +112,19 @@ export function BatchResults({ results, errors }: Props) {
   )
 }
 
+function host(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "")
+  } catch {
+    return url
+  }
+}
+
 function esc(str: unknown): string {
   if (!str) return ""
-  return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
 }

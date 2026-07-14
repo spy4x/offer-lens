@@ -8,6 +8,7 @@ import {
   updateSection,
 } from "../lib/api.ts"
 import { showToast } from "../lib/state.ts"
+import { Icon } from "../components/Icon.tsx"
 
 export function SectionsPage() {
   const [sections, setSections] = useState<CustomSection[]>([])
@@ -73,96 +74,112 @@ export function SectionsPage() {
   }
 
   return (
-    <div class="max-w-[700px]">
-      <div class="mb-6">
-        <h1 class="text-2xl font-bold tracking-tight">Custom Sections</h1>
-        <p class="text-sm text-fg-2 mt-1">
-          Define custom questions for the AI to answer about each landing page.
-        </p>
+    <div class="max-w-[760px] space-y-5 fade-up">
+      <div class="flex items-center gap-3">
+        <span class="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-accent-subtle text-accent border border-accent/20">
+          <Icon name="list" size={18} />
+        </span>
+        <div>
+          <h1 class="text-xl font-bold tracking-tight">Custom sections</h1>
+          <p class="text-xs text-fg-3">
+            Define custom questions for the AI to answer about each page.
+          </p>
+        </div>
       </div>
 
       {/* Form */}
-      <form onSubmit={handleSave} class="glass rounded-2xl p-5 sm:p-6 mb-5">
-        <h3 class="text-base font-semibold mb-3">{editingId ? "Edit" : "New"} Section</h3>
-        <div class="flex flex-col gap-3">
+      <form onSubmit={handleSave} class="card p-5 sm:p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-base font-semibold tracking-tight">
+            {editingId ? "Edit section" : "New section"}
+          </h2>
+          {editingId && (
+            <button type="button" onClick={resetForm} class="btn-ghost text-xs">
+              Cancel
+            </button>
+          )}
+        </div>
+        <div class="space-y-4">
           <div>
-            <label class="text-xs font-medium text-fg-2 mb-1 block">Title</label>
+            <label class="label">Title</label>
             <input
               type="text"
               value={title}
               onInput={(e) => setTitle((e.target as HTMLInputElement).value)}
-              class="w-full px-3 py-2.5 bg-input border border-border rounded-xl text-sm
-                focus:outline-none focus:border-accent transition-colors"
-              placeholder="e.g., Competitor Analysis"
+              class="input"
+              placeholder="e.g. Competitor analysis"
               required
             />
           </div>
           <div>
-            <label class="text-xs font-medium text-fg-2 mb-1 block">Prompt</label>
+            <label class="label">Prompt</label>
             <textarea
               value={prompt}
               onInput={(e) => setPrompt((e.target as HTMLTextAreaElement).value)}
-              class="w-full px-3 py-2.5 bg-input border border-border rounded-xl text-sm
-                focus:outline-none focus:border-accent transition-colors min-h-[90px] resize-vertical"
-              placeholder="e.g., What specific competitors are mentioned on this page?"
+              class="textarea"
+              placeholder="e.g. What specific competitors are mentioned on this page?"
               required
             />
           </div>
-          <div class="flex gap-2">
+          <div class="flex justify-end pt-1">
             <button
               type="submit"
               disabled={saving || !title.trim() || !prompt.trim()}
-              class="btn-glow px-4 py-2 text-white rounded-xl font-semibold text-sm
-                border-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              class="btn-primary px-5 py-2.5"
             >
-              {saving ? "Saving..." : editingId ? "Update" : "Create"}
+              {saving ? <span class="spinner" /> : (
+                <>
+                  {editingId ? "Update" : "Create"}
+                  <Icon name={editingId ? "check" : "plus"} size={14} />
+                </>
+              )}
             </button>
-            {editingId && (
-              <button
-                type="button"
-                onClick={resetForm}
-                class="px-4 py-2 rounded-xl border border-border text-sm hover:bg-input/50
-                  cursor-pointer bg-transparent transition-colors"
-              >
-                Cancel
-              </button>
-            )}
           </div>
         </div>
       </form>
 
       {/* List */}
       {loading
-        ? <p class="text-sm text-fg-2">Loading...</p>
+        ? <div class="text-sm text-fg-3">Loading…</div>
         : sections.length === 0
-        ? <div class="glass rounded-xl p-4 text-sm text-fg-2">No sections yet.</div>
+        ? (
+          <div class="card p-10 text-center">
+            <div class="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-input text-fg-3 mb-3">
+              <Icon name="list" size={20} />
+            </div>
+            <p class="text-sm text-fg-2 mb-1">No sections yet</p>
+            <p class="text-xs text-fg-3">Create your first one above.</p>
+          </div>
+        )
         : (
-          <div class="flex flex-col gap-2">
+          <div class="space-y-2">
             {sections.map((s) => (
               <div
                 key={s.id}
-                class="glass rounded-xl px-4 py-3 flex flex-col sm:flex-row sm:items-start justify-between gap-2"
+                class="flex items-start gap-3 px-4 py-3.5 rounded-lg bg-surface-2 border border-border hover:border-border-strong transition-colors"
               >
+                <div class="inline-flex items-center justify-center w-9 h-9 rounded-md bg-accent-subtle text-accent shrink-0">
+                  <Icon name="sparkle" size={15} />
+                </div>
                 <div class="flex-1 min-w-0">
-                  <p class="font-semibold text-sm">{s.title}</p>
-                  <p class="text-xs text-fg-2 mt-0.5 line-clamp-2">{s.prompt}</p>
+                  <p class="font-semibold text-sm text-fg">{s.title}</p>
+                  <p class="text-xs text-fg-3 mt-0.5 line-clamp-2 leading-relaxed">{s.prompt}</p>
                 </div>
                 <div class="flex gap-2 shrink-0">
                   <button
                     type="button"
                     onClick={() => startEdit(s)}
-                    class="text-xs px-3 py-1.5 rounded-lg border border-border hover:bg-input/50
-                      cursor-pointer bg-transparent transition-colors"
+                    class="btn-ghost text-xs"
                   >
+                    <Icon name="edit" size={12} />
                     Edit
                   </button>
                   <button
                     type="button"
                     onClick={() => handleDelete(s.id, s.title)}
-                    class="text-xs px-3 py-1.5 rounded-lg border border-red/30 text-red
-                      hover:bg-red/10 cursor-pointer bg-transparent transition-colors"
+                    class="btn-danger text-xs"
                   >
-                    Delete
+                    <Icon name="trash" size={12} />
                   </button>
                 </div>
               </div>

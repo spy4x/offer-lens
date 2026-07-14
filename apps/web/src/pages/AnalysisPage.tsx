@@ -2,6 +2,7 @@ import { useEffect, useState } from "preact/hooks"
 import { type AnalysisDetail, fetchAnalysisById } from "../lib/api.ts"
 import { AnalysisResults } from "../components/AnalysisResults.tsx"
 import { showToast } from "../lib/state.ts"
+import { Icon } from "../components/Icon.tsx"
 
 interface Props {
   id: number
@@ -15,37 +16,46 @@ export function AnalysisPage({ id }: Props) {
   useEffect(() => {
     setLoading(true)
     setError("")
-    fetchAnalysisById(id).then(setData).catch((err) =>
-      setError(err instanceof Error ? err.message : "Failed to load")
-    ).finally(() => setLoading(false))
+    fetchAnalysisById(id)
+      .then(setData)
+      .catch((err) => setError(err instanceof Error ? err.message : "Failed to load"))
+      .finally(() => setLoading(false))
   }, [id])
 
   if (loading) {
     return (
-      <div class="text-center py-20">
-        <div class="spinner" />
-        <p class="text-sm text-fg-2">Loading analysis...</p>
+      <div class="text-center py-20 fade-up">
+        <div class="spinner-lg mx-auto mb-4" />
+        <p class="text-sm text-fg-2">Loading analysis…</p>
       </div>
     )
   }
 
   if (error || !data) {
     return (
-      <div class="glass rounded-xl p-8 text-center max-w-md mx-auto mt-10">
-        <h1 class="text-xl font-bold mb-2">Analysis Not Found</h1>
-        <p class="text-sm text-fg-2">{error || "Unknown error"}</p>
+      <div class="max-w-md mx-auto mt-10 fade-up">
+        <div class="card p-8 text-center">
+          <div class="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-red-subtle text-red border border-red/20 mb-4">
+            <Icon name="alert" size={20} />
+          </div>
+          <h1 class="text-xl font-bold mb-2">Analysis not found</h1>
+          <p class="text-sm text-fg-2">{error || "Unknown error"}</p>
+        </div>
       </div>
     )
   }
 
   return (
-    <div>
+    <div class="space-y-5 fade-up">
       {/* Header bar */}
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+      <div class="card p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div class="min-w-0 flex-1">
-          <h1 class="text-xl font-bold tracking-tight truncate">{data.url}</h1>
-          <div class="flex items-center gap-3 mt-1 text-xs text-fg-2">
-            <span>
+          <div class="flex items-center gap-2 mb-2">
+            <span class="badge badge-green">
+              <span class="live-dot" style={{ width: 5, height: 5 }} />
+              Analyzed
+            </span>
+            <span class="text-xs text-fg-3 nums">
               {new Date(data.createdAt).toLocaleDateString("en-US", {
                 month: "short",
                 day: "numeric",
@@ -55,33 +65,25 @@ export function AnalysisPage({ id }: Props) {
               })}
             </span>
             {data.tokensUsed && data.tokensUsed.totalTokens > 0 && (
-              <span class="px-2 py-0.5 rounded-full bg-input/50">
-                ~{data.tokensUsed.totalTokens.toLocaleString()} tokens
+              <span class="badge badge-neutral normal-case tracking-normal">
+                {data.tokensUsed.totalTokens.toLocaleString()} tokens
               </span>
             )}
           </div>
+          <h1 class="text-lg font-bold tracking-tight truncate flex items-center gap-2">
+            <Icon name="link" size={16} class="text-fg-3 shrink-0" />
+            <span class="truncate">{data.url}</span>
+          </h1>
         </div>
         <button
           type="button"
           onClick={() =>
             navigator.clipboard.writeText(globalThis.location.href).then(() =>
-              showToast("Link copied!", "success")
+              showToast("Link copied", "success")
             )}
-          class="btn-glow px-5 py-2.5 text-white rounded-xl font-semibold text-sm
-            inline-flex items-center gap-2 border-none cursor-pointer shrink-0"
+          class="btn-primary px-4 py-2.5 shrink-0"
         >
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-            <polyline points="15 3 21 3 21 9" />
-            <line x1="10" y1="14" x2="21" y2="3" />
-          </svg>
+          <Icon name="share" size={14} />
           Share
         </button>
       </div>

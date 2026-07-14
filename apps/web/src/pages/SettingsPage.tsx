@@ -1,7 +1,8 @@
-// Settings page: BYOK key management
+// BYOK key management
 import { useEffect, useState } from "preact/hooks"
 import { deleteKey, fetchKeys, type SavedKey, saveKey, testKey } from "../lib/api.ts"
 import { showToast } from "../lib/state.ts"
+import { Icon } from "../components/Icon.tsx"
 
 const PROVIDERS = [
   { id: "openai", label: "OpenAI", baseUrl: "https://api.openai.com" },
@@ -64,7 +65,7 @@ export function SettingsPage() {
     if (!confirm(`Remove API key for ${prov}?`)) return
     try {
       await deleteKey(prov)
-      showToast(`Key removed`, "success")
+      showToast("Key removed", "success")
       await loadKeys()
     } catch (err) {
       showToast(err instanceof Error ? err.message : "Failed to delete", "error")
@@ -77,7 +78,7 @@ export function SettingsPage() {
       const result = await testKey(prov)
       showToast(
         result.success
-          ? `Key works! Model: ${result.model || "unknown"}`
+          ? `Key works · ${result.model || "model unknown"}`
           : result.error || "Test failed",
         result.success ? "success" : "error",
       )
@@ -88,54 +89,87 @@ export function SettingsPage() {
   }
 
   return (
-    <div class="max-w-[700px]">
-      <div class="mb-6">
-        <h1 class="text-2xl font-bold tracking-tight">Settings</h1>
-        <p class="text-sm text-fg-2 mt-1">Manage your API keys</p>
+    <div class="max-w-[760px] space-y-6 fade-up">
+      <div class="flex items-center gap-3">
+        <span class="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-accent-subtle text-accent border border-accent/20">
+          <Icon name="cog" size={18} />
+        </span>
+        <div>
+          <h1 class="text-xl font-bold tracking-tight">Settings</h1>
+          <p class="text-xs text-fg-3">Manage your API keys</p>
+        </div>
       </div>
 
       {/* Saved keys */}
-      <div class="mb-8">
-        <h2 class="text-base font-semibold mb-2">Your API Keys</h2>
-        <p class="text-xs text-fg-2 mb-4 leading-relaxed">
-          When a key is saved, it's used automatically — no demo limits. Keys are encrypted at rest.
-        </p>
+      <section class="card p-5 sm:p-6">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h2 class="text-base font-semibold tracking-tight">Your API keys</h2>
+            <p class="text-xs text-fg-3 mt-0.5">
+              When a key is saved, it's used automatically — no demo limits. Encrypted at rest.
+            </p>
+          </div>
+        </div>
 
         {loading
-          ? <p class="text-sm text-fg-2">Loading...</p>
+          ? <div class="text-sm text-fg-3">Loading…</div>
           : keys.length === 0
-          ? <div class="glass rounded-xl p-4 text-sm text-fg-2">No keys saved yet.</div>
+          ? (
+            <div class="flex flex-col items-center text-center py-8 px-4 rounded-lg bg-surface-2 border border-dashed border-border">
+              <Icon name="key" size={22} class="text-fg-3 mb-2" />
+              <p class="text-sm text-fg-2 mb-0.5">No keys saved yet</p>
+              <p class="text-xs text-fg-3">Add a key below to bypass demo limits.</p>
+            </div>
+          )
           : (
-            <div class="flex flex-col gap-2">
+            <div class="space-y-2">
               {keys.map((k) => (
                 <div
                   key={k.provider}
-                  class="glass rounded-xl px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+                  class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 rounded-lg bg-surface-2 border border-border"
                 >
-                  <div class="flex items-center gap-2 flex-wrap">
-                    <span class="font-semibold text-sm capitalize">{k.provider}</span>
-                    <span class="text-xs text-fg-2 font-mono">{k.keyHint}</span>
+                  <div class="flex items-center gap-3 flex-wrap min-w-0">
+                    <div class="inline-flex items-center justify-center w-8 h-8 rounded-md bg-accent-subtle text-accent">
+                      <Icon name="key" size={14} />
+                    </div>
+                    <div>
+                      <p class="font-semibold text-sm capitalize">{k.provider}</p>
+                      <p class="text-xs text-fg-3 font-mono">{k.keyHint}</p>
+                    </div>
                     {k.model && (
-                      <span class="text-xs bg-input/50 px-2 py-0.5 rounded-full">{k.model}</span>
+                      <span class="badge badge-neutral normal-case tracking-normal">
+                        {k.model}
+                      </span>
                     )}
-                    {k.isActive && <span class="w-1.5 h-1.5 rounded-full bg-green inline-block" />}
+                    {k.isActive && (
+                      <span class="inline-flex items-center gap-1.5 text-xs text-green">
+                        <span class="live-dot" />
+                        Active
+                      </span>
+                    )}
                   </div>
-                  <div class="flex gap-2">
+                  <div class="flex gap-2 shrink-0">
                     <button
                       type="button"
                       onClick={() => handleTest(k.provider)}
                       disabled={testing === k.provider}
-                      class="text-xs px-3 py-1.5 rounded-lg border border-border hover:bg-input/50
-                        cursor-pointer disabled:opacity-50 bg-transparent transition-colors"
+                      class="btn-secondary text-xs px-3 py-1.5"
                     >
-                      {testing === k.provider ? "Testing..." : "Test"}
+                      {testing === k.provider
+                        ? <span class="spinner" style={{ width: 12, height: 12 }} />
+                        : (
+                          <>
+                            <Icon name="zap" size={12} />
+                            Test
+                          </>
+                        )}
                     </button>
                     <button
                       type="button"
                       onClick={() => handleDelete(k.provider)}
-                      class="text-xs px-3 py-1.5 rounded-lg border border-red/30 text-red
-                        hover:bg-red/10 cursor-pointer bg-transparent transition-colors"
+                      class="btn-danger text-xs px-3 py-1.5"
                     >
+                      <Icon name="trash" size={12} />
                       Remove
                     </button>
                   </div>
@@ -143,72 +177,81 @@ export function SettingsPage() {
               ))}
             </div>
           )}
-      </div>
+      </section>
 
       {/* Add key */}
-      <div class="glass rounded-2xl p-5 sm:p-6">
-        <h3 class="text-base font-semibold mb-4">Add API Key</h3>
-        <form onSubmit={handleSave} class="flex flex-col gap-3">
+      <section class="card p-5 sm:p-6">
+        <h2 class="text-base font-semibold tracking-tight mb-1">Add API key</h2>
+        <p class="text-xs text-fg-3 mb-5">
+          Keys are encrypted at rest and never logged.
+        </p>
+        <form onSubmit={handleSave} class="space-y-4">
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <label class="text-xs font-medium text-fg-2 mb-1 block">Provider</label>
+              <label class="label">Provider</label>
               <select
                 value={provider}
                 onChange={(e) => handleProviderChange((e.target as HTMLSelectElement).value)}
-                class="w-full px-3 py-2.5 bg-input border border-border rounded-xl text-sm
-                  focus:outline-none focus:border-accent transition-colors"
+                class="select"
               >
                 {PROVIDERS.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
               </select>
             </div>
             <div class="sm:col-span-2">
-              <label class="text-xs font-medium text-fg-2 mb-1 block">API Key</label>
+              <label class="label">API key</label>
               <input
                 type="password"
                 value={apiKey}
                 onInput={(e) => setApiKey((e.target as HTMLInputElement).value)}
-                class="w-full px-3 py-2.5 bg-input border border-border rounded-xl text-sm
-                  focus:outline-none focus:border-accent transition-colors"
+                class="input font-mono text-sm"
                 placeholder="sk-..."
                 required
                 minLength={8}
+                autoComplete="off"
               />
             </div>
           </div>
-          <div class="grid grid-cols-2 gap-3">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label class="text-xs font-medium text-fg-2 mb-1 block">Base URL</label>
+              <label class="label">Base URL</label>
               <input
                 type="text"
                 value={baseUrl}
                 onInput={(e) => setBaseUrl((e.target as HTMLInputElement).value)}
-                class="w-full px-3 py-2.5 bg-input border border-border rounded-xl text-sm
-                  focus:outline-none focus:border-accent transition-colors"
+                class="input font-mono text-sm"
                 placeholder="https://api.openai.com"
               />
             </div>
             <div>
-              <label class="text-xs font-medium text-fg-2 mb-1 block">Model</label>
+              <label class="label">Model</label>
               <input
                 type="text"
                 value={model}
                 onInput={(e) => setModel((e.target as HTMLInputElement).value)}
-                class="w-full px-3 py-2.5 bg-input border border-border rounded-xl text-sm
-                  focus:outline-none focus:border-accent transition-colors"
+                class="input font-mono text-sm"
                 placeholder="gpt-4o-mini"
               />
             </div>
           </div>
-          <button
-            type="submit"
-            disabled={saving || !apiKey.trim()}
-            class="btn-glow px-6 py-2.5 text-white rounded-xl font-semibold text-sm
-              border-none cursor-pointer self-start disabled:opacity-50 disabled:cursor-not-allowed mt-1"
-          >
-            {saving ? "Saving..." : "Save Key"}
-          </button>
+          <div class="flex items-center gap-3 pt-1">
+            <button
+              type="submit"
+              disabled={saving || !apiKey.trim()}
+              class="btn-primary px-5 py-2.5"
+            >
+              {saving ? <span class="spinner" /> : (
+                <>
+                  <Icon name="key" size={14} />
+                  Save key
+                </>
+              )}
+            </button>
+            <p class="text-xs text-fg-3">
+              {apiKey.length > 0 ? `${apiKey.length} chars` : "Paste key to save"}
+            </p>
+          </div>
         </form>
-      </div>
+      </section>
     </div>
   )
 }

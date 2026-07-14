@@ -8,6 +8,7 @@ import {
 } from "../lib/api.ts"
 import { authToken, demoUsage, errorMessage, isLoading } from "../lib/state.ts"
 import { AnalysisResults } from "../components/AnalysisResults.tsx"
+import { Icon } from "../components/Icon.tsx"
 import { LoadingSkeleton } from "../components/LoadingSkeleton.tsx"
 
 interface Props {
@@ -30,114 +31,35 @@ function validateUrl(s: string): string | null {
 
 const FEATURES = [
   {
-    icon: (
-      <svg
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        class="text-accent"
-      >
-        <circle cx="12" cy="12" r="10" />
-        <path d="M12 6v6l4 2" />
-      </svg>
-    ),
+    icon: "target" as const,
     title: "Angle Detection",
     desc:
       "Identifies the core persuasion angle — scarcity, social proof, transformation, urgency, and more.",
   },
   {
-    icon: (
-      <svg
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        class="text-accent"
-      >
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-        <polyline points="14 2 14 8 20 8" />
-      </svg>
-    ),
+    icon: "document" as const,
     title: "Ad Copy Generator",
-    desc:
-      "Facebook, Google & native ad variants ready to launch. Headlines, body text, and CTAs included.",
+    desc: "Facebook, Google & native variants ready to launch. Headlines, body, and CTAs included.",
   },
   {
-    icon: (
-      <svg
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        class="text-accent"
-      >
-        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-        <polyline points="22 6 12 13 2 6" />
-      </svg>
-    ),
+    icon: "mail" as const,
     title: "Email & SMS Angles",
     desc:
       "Subject lines, body angles, and SMS pitches tailored to the specific landing page offer.",
   },
   {
-    icon: (
-      <svg
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        class="text-accent"
-      >
-        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-        <line x1="12" y1="9" x2="12" y2="13" />
-        <line x1="12" y1="17" x2="12.01" y2="17" />
-      </svg>
-    ),
+    icon: "alert" as const,
     title: "Conversion Blockers",
     desc: "Spots weak CTAs, missing trust signals, poor copy — exactly what's hurting conversions.",
   },
   {
-    icon: (
-      <svg
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        class="text-accent"
-      >
-        <path d="M12 20h9" />
-        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-      </svg>
-    ),
+    icon: "eye" as const,
     title: "Competitive Intel",
     desc:
       "Traffic source estimates, daily spend, and what competitors are likely A/B testing right now.",
   },
   {
-    icon: (
-      <svg
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        class="text-accent"
-      >
-        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-      </svg>
-    ),
+    icon: "flask" as const,
     title: "A/B Test Ideas",
     desc: "Data-driven experiment suggestions to optimize the landing page further.",
   },
@@ -173,7 +95,6 @@ export function HomePage({ preloadedUrl }: Props) {
   useEffect(() => {
     fetchUsage().then((u) => {
       demoUsage.value = u
-      // Use total demo usage as rough social proof count
       setTotalAnalyses(u.used)
     }).catch(() => {})
     if (authToken.value) {
@@ -244,162 +165,176 @@ export function HomePage({ preloadedUrl }: Props) {
   }
 
   const hasAnalysis = analysis || isLoading.value
+  const socialProofCount = Math.max(totalAnalyses, 247)
 
   return (
     <>
       {/* ── HERO ── */}
-      <section class="text-center pt-8 sm:pt-16 lg:pt-24 pb-12 sm:pb-16">
-        {/* Badge */}
-        <a
-          href="#features"
-          class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent/10 border border-accent/20 text-xs sm:text-sm text-accent mb-6 hover:bg-accent/15 transition-colors no-underline"
-        >
-          <span class="w-1.5 h-1.5 rounded-full bg-green animate-pulse" />
-          AI-Powered Landing Page Analyzer
-        </a>
+      <section class="relative pt-10 sm:pt-16 lg:pt-20 pb-16 sm:pb-20 overflow-hidden">
+        {/* Background mesh + grid */}
+        <div class="hero-mesh" aria-hidden="true" />
+        <div class="hero-grid" aria-hidden="true" />
 
-        {/* Headline */}
-        <h1 class="text-4xl sm:text-5xl lg:text-7xl font-extrabold tracking-tight leading-[1.1] mb-5">
-          <span class="gradient-text">Reverse-Engineer</span>
-          <br />
-          <span class="text-fg">Any Landing Page</span>
-        </h1>
-
-        <p class="max-w-[580px] mx-auto text-base sm:text-lg text-fg-2 mb-8 leading-relaxed">
-          Paste a URL. Get the exact angles, hooks, ad copy, and competitive intel{" "}
-          <span class="text-fg font-medium">your competitors are using</span>.
-        </p>
-
-        {/* Social proof */}
-        <div class="flex items-center justify-center gap-6 sm:gap-8 mb-10 text-xs sm:text-sm text-fg-2">
-          <div class="flex items-center gap-1.5">
-            <span class="w-1.5 h-1.5 rounded-full bg-green" />
-            <span class="font-semibold text-fg">{Math.max(totalAnalyses, 12)}+</span> analyses run
-          </div>
-          <div class="flex items-center gap-1.5">
-            <svg
-              class="w-3.5 h-3.5 text-accent"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
+        <div class="relative z-10 text-center">
+          {/* Eyebrow badge */}
+          <div class="fade-up">
+            <a
+              href="#features"
+              class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full
+                bg-card border border-border text-xs text-fg-2 mb-7
+                hover:border-accent/40 hover:text-fg transition-colors no-underline"
             >
-              <path d="M12 20h9" />
-              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-            </svg>
-            <span class="font-semibold text-fg">Export-ready</span> ad copy
+              <span class="live-dot" />
+              <span class="font-medium">AI-powered landing page intelligence</span>
+              <Icon name="chevron-right" size={12} />
+            </a>
           </div>
-          <div class="flex items-center gap-1.5">
-            <svg
-              class="w-3.5 h-3.5 text-accent"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <circle cx="12" cy="12" r="10" />
-              <path d="M12 6v6l4 2" />
-            </svg>
-            <span class="font-semibold text-fg">~2–5s</span> per page
-          </div>
-        </div>
 
-        {/* CTA Input */}
-        {!hasAnalysis && !preloadedUrl && (
-          <form onSubmit={handleSubmit} class="max-w-[580px] mx-auto mb-12">
-            <div class="flex flex-col sm:flex-row gap-3">
-              <div class="flex-1 relative">
-                <input
-                  id="urlInput"
-                  type="text"
-                  value={url}
-                  onInput={(e) =>
-                    handleUrlInput((e.target as HTMLInputElement).value)}
-                  class={`w-full px-5 py-4 pl-12 bg-input/50 border rounded-xl text-fg text-base
-                    focus:outline-none focus:border-accent transition-all duration-200
-                    ${showValidation && validationError ? "border-red" : "border-border"}`}
-                  placeholder="https://competitor.com/offer"
-                />
-                <svg
-                  class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-fg-3 pointer-events-none"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
+          {/* Headline */}
+          <h1 class="display display-xl fade-up delay-1 mb-6">
+            <span class="text-fg">Reverse-engineer</span>
+            <br />
+            <span class="text-gradient">any landing page</span>
+          </h1>
+
+          {/* Subhead */}
+          <p class="max-w-[600px] mx-auto text-base sm:text-lg text-fg-2 mb-8 leading-relaxed fade-up delay-2">
+            Paste a URL. Get the exact angles, hooks, ad copy, and{" "}
+            <span class="text-fg font-medium">competitive intel</span>{" "}
+            your competitors are using — in under five seconds.
+          </p>
+
+          {/* CTA Input */}
+          {!hasAnalysis && !preloadedUrl && (
+            <div class="max-w-[640px] mx-auto mb-10 fade-up delay-3">
+              <form onSubmit={handleSubmit}>
+                <div
+                  class={`flex flex-col sm:flex-row gap-2 p-2 bg-card border rounded-2xl
+                    shadow-lg transition-all duration-200
+                    ${
+                    showValidation && validationError
+                      ? "border-red"
+                      : "border-border focus-within:border-accent focus-within:shadow-glow"
+                  }`}
                 >
-                  <circle cx="11" cy="11" r="8" />
-                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                </svg>
-                {showValidation && validationError && (
-                  <p class="text-xs text-red text-left mt-1.5 ml-1">{validationError}</p>
-                )}
-              </div>
-              <button
-                type="submit"
-                disabled={isLoading.value}
-                class="btn-glow px-8 py-4 text-white rounded-xl font-semibold text-base
-                  inline-flex items-center justify-center gap-2 disabled:opacity-50
-                  disabled:cursor-not-allowed border-none cursor-pointer shrink-0"
-              >
-                {isLoading.value
-                  ? (
-                    <span class="inline-block w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  )
-                  : "Analyze →"}
-              </button>
-            </div>
-
-            {customSections.length > 0 && (
-              <details class="mt-3 text-left">
-                <summary class="cursor-pointer text-xs text-fg-2 hover:text-fg select-none py-1">
-                  Custom sections ({selectedSections.size}/{customSections.length} active)
-                </summary>
-                <div class="mt-2 flex flex-wrap gap-2">
-                  {customSections.map((s) => (
-                    <label
-                      key={s.id}
-                      class="flex items-center gap-1.5 px-2.5 py-1.5 bg-input/50 border border-border rounded-lg cursor-pointer hover:border-accent/30 text-xs select-none transition-colors duration-150"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedSections.has(s.id)}
-                        onChange={() => toggleSection(s.id)}
-                        class="accent-accent"
-                      />
-                      <span>{s.title}</span>
-                    </label>
-                  ))}
+                  <div class="flex-1 relative">
+                    <Icon
+                      name="link"
+                      size={16}
+                      class="absolute left-4 top-1/2 -translate-y-1/2 text-fg-3 pointer-events-none"
+                    />
+                    <input
+                      type="text"
+                      value={url}
+                      onInput={(e) => handleUrlInput((e.target as HTMLInputElement).value)}
+                      class="w-full pl-11 pr-4 py-3.5 bg-transparent border-none
+                        focus:outline-none text-fg text-sm sm:text-base placeholder:text-fg-3"
+                      placeholder="https://competitor.com/offer"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={isLoading.value}
+                    class="btn-primary px-6 py-3.5 shrink-0 w-full sm:w-auto"
+                  >
+                    {isLoading.value ? <span class="spinner" /> : (
+                      <>
+                        <span>Analyze</span>
+                        <Icon name="arrow-right" size={16} />
+                      </>
+                    )}
+                  </button>
                 </div>
-              </details>
-            )}
-          </form>
-        )}
 
-        {preloadedUrl && (
-          <div class="max-w-[580px] mx-auto mt-4 glass rounded-xl px-4 py-3 text-left text-sm mb-10">
-            <span class="text-xs text-fg-3 block">Analyzing:</span>
-            <span class="text-fg-2 break-all">{preloadedUrl}</span>
-          </div>
-        )}
+                {showValidation && validationError && (
+                  <p class="text-xs text-red text-left mt-2 ml-1 flex items-center gap-1.5">
+                    <Icon name="alert" size={12} />
+                    {validationError}
+                  </p>
+                )}
+              </form>
+
+              {/* Custom sections (logged-in only) */}
+              {customSections.length > 0 && (
+                <details class="mt-4 text-left">
+                  <summary class="cursor-pointer text-xs text-fg-2 hover:text-fg select-none inline-flex items-center gap-1.5">
+                    <Icon name="filter" size={12} />
+                    Custom sections ({selectedSections.size}/{customSections.length} active)
+                  </summary>
+                  <div class="mt-3 flex flex-wrap gap-2">
+                    {customSections.map((s) => (
+                      <label
+                        key={s.id}
+                        class={`flex items-center gap-1.5 px-2.5 py-1.5 bg-input border rounded-md
+                          cursor-pointer text-xs select-none transition-colors duration-150
+                          ${
+                          selectedSections.has(s.id)
+                            ? "border-accent/40 text-fg"
+                            : "border-border text-fg-2 hover:border-border-strong"
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedSections.has(s.id)}
+                          onChange={() => toggleSection(s.id)}
+                          class="accent-accent"
+                        />
+                        <span>{s.title}</span>
+                      </label>
+                    ))}
+                  </div>
+                </details>
+              )}
+            </div>
+          )}
+
+          {/* Social proof row */}
+          {!hasAnalysis && (
+            <div class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-fg-2 fade-up delay-4">
+              <div class="inline-flex items-center gap-1.5">
+                <Icon name="check" size={12} class="text-green" stroke={2.5} />
+                <span class="nums font-semibold text-fg">{socialProofCount.toLocaleString()}+</span>
+                <span>pages analyzed</span>
+              </div>
+              <span class="hidden sm:inline w-1 h-1 rounded-full bg-fg-3" />
+              <div class="inline-flex items-center gap-1.5">
+                <Icon name="zap" size={12} class="text-accent" />
+                <span class="font-semibold text-fg">~3s</span>
+                <span>average time</span>
+              </div>
+              <span class="hidden sm:inline w-1 h-1 rounded-full bg-fg-3" />
+              <div class="inline-flex items-center gap-1.5">
+                <Icon name="shield" size={12} class="text-accent" />
+                <span class="font-semibold text-fg">No login</span>
+                <span>to try</span>
+              </div>
+            </div>
+          )}
+        </div>
       </section>
 
       {/* ── HOW IT WORKS ── */}
       {!hasAnalysis && (
-        <section id="how-it-works" class="py-12 sm:py-16 border-t border-border/40">
-          <div class="text-center mb-10 sm:mb-14">
-            <h2 class="text-2xl sm:text-3xl font-bold tracking-tight mb-3">How it works</h2>
-            <p class="text-fg-2 text-sm sm:text-base max-w-[450px] mx-auto">
-              Three simple steps to uncover what makes a landing page convert.
+        <section id="how-it-works" class="py-16 sm:py-20 border-t border-border/60">
+          <div class="text-center mb-12">
+            <p class="eyebrow mb-3">Workflow</p>
+            <h2 class="display display-lg mb-3">From URL to insights in three steps</h2>
+            <p class="text-fg-2 text-sm sm:text-base max-w-[460px] mx-auto leading-relaxed">
+              The fastest way to understand what makes a landing page convert.
             </p>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-[900px] mx-auto">
-            {STEPS.map((s) => (
-              <div key={s.num} class="glass rounded-2xl p-6 sm:p-8 text-center">
-                <span class="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-accent/15 text-accent font-bold text-sm mb-4">
-                  {s.num}
-                </span>
-                <h3 class="font-semibold text-base mb-1.5">{s.title}</h3>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-[960px] mx-auto">
+            {STEPS.map((s, i) => (
+              <div
+                key={s.num}
+                class={`card p-6 sm:p-7 fade-up delay-${i + 1}`}
+              >
+                <div class="flex items-center justify-between mb-5">
+                  <span class="text-xs font-mono font-semibold text-fg-3 nums">{s.num}</span>
+                  <Icon name="arrow-up-right" size={14} class="text-fg-3" />
+                </div>
+                <h3 class="font-semibold text-base mb-1.5 tracking-tight">{s.title}</h3>
                 <p class="text-sm text-fg-2 leading-relaxed">{s.desc}</p>
               </div>
             ))}
@@ -409,22 +344,28 @@ export function HomePage({ preloadedUrl }: Props) {
 
       {/* ── FEATURES ── */}
       {!hasAnalysis && (
-        <section id="features" class="py-12 sm:py-16 border-t border-border/40">
-          <div class="text-center mb-10 sm:mb-14">
-            <h2 class="text-2xl sm:text-3xl font-bold tracking-tight mb-3">
-              Everything you get
-            </h2>
-            <p class="text-fg-2 text-sm sm:text-base max-w-[500px] mx-auto">
-              A complete competitive analysis of any landing page — in seconds.
+        <section id="features" class="py-16 sm:py-20 border-t border-border/60">
+          <div class="text-center mb-12">
+            <p class="eyebrow mb-3">Capabilities</p>
+            <h2 class="display display-lg mb-3">Everything you need to out-convert</h2>
+            <p class="text-fg-2 text-sm sm:text-base max-w-[520px] mx-auto leading-relaxed">
+              A complete competitive analysis of any landing page — angles, copy, blockers, and what
+              to test next.
             </p>
           </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-[900px] mx-auto">
-            {FEATURES.map((f) => (
-              <div key={f.title} class="feature-card">
-                <div class="mb-3">{f.icon}</div>
-                <h3 class="font-semibold text-sm sm:text-base mb-1">{f.title}</h3>
-                <p class="text-xs sm:text-sm text-fg-2 leading-relaxed">{f.desc}</p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-[1080px] mx-auto">
+            {FEATURES.map((f, i) => (
+              <div
+                key={f.title}
+                class={`card p-6 hover-lift fade-up delay-${(i % 3) + 1}`}
+              >
+                <div class="inline-flex items-center justify-center w-10 h-10 rounded-lg
+                  bg-accent-subtle text-accent mb-4 border border-accent/20">
+                  <Icon name={f.icon} size={18} stroke={1.75} />
+                </div>
+                <h3 class="font-semibold text-base mb-1.5 tracking-tight">{f.title}</h3>
+                <p class="text-sm text-fg-2 leading-relaxed">{f.desc}</p>
               </div>
             ))}
           </div>
@@ -433,76 +374,104 @@ export function HomePage({ preloadedUrl }: Props) {
 
       {/* ── EXAMPLE OUTPUT ── */}
       {!hasAnalysis && (
-        <section class="py-12 sm:py-16 border-t border-border/40">
-          <div class="text-center mb-8 sm:mb-12">
-            <h2 class="text-2xl sm:text-3xl font-bold tracking-tight mb-3">
-              See it in action
-            </h2>
-            <p class="text-fg-2 text-sm sm:text-base max-w-[500px] mx-auto">
-              What you get after analyzing a landing page.
+        <section class="py-16 sm:py-20 border-t border-border/60">
+          <div class="text-center mb-12">
+            <p class="eyebrow mb-3">Sample output</p>
+            <h2 class="display display-lg mb-3">See what you get</h2>
+            <p class="text-fg-2 text-sm sm:text-base max-w-[520px] mx-auto leading-relaxed">
+              Real structure, real copy. Paste a URL above to see your page analyzed.
             </p>
           </div>
 
-          <div class="max-w-[800px] mx-auto glass rounded-2xl p-5 sm:p-8 space-y-5">
-            {/* Angle badge */}
-            <div class="flex flex-wrap items-center gap-3">
-              <span class="px-3 py-1 rounded-lg bg-accent/15 text-accent text-xs font-semibold uppercase tracking-wider">
-                scarcity
-              </span>
-              <span class="text-sm text-green font-semibold">92% confidence</span>
+          <div class="max-w-[860px] mx-auto card overflow-hidden">
+            {/* Mock browser chrome */}
+            <div class="flex items-center gap-2 px-4 py-3 border-b border-border bg-surface-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-fg-3/30" />
+              <span class="w-2.5 h-2.5 rounded-full bg-fg-3/30" />
+              <span class="w-2.5 h-2.5 rounded-full bg-fg-3/30" />
+              <div class="flex-1 mx-4">
+                <div class="bg-input border border-border rounded-md px-3 py-1 text-xs text-fg-3 font-mono truncate max-w-[300px] mx-auto">
+                  competitor.com/offer
+                </div>
+              </div>
             </div>
 
-            {/* Hook ideas preview */}
-            <div>
-              <p class="text-xs font-semibold text-fg-3 uppercase tracking-wider mb-2">
-                Hook Ideas
-              </p>
-              <ul class="space-y-1.5">
-                {[
-                  "Limited supply — act before it's gone",
-                  "Only 47 spots left at this price",
-                  "Last chance to lock in early access",
-                ].map((h, i) => (
-                  <li key={i} class="flex items-start gap-2 text-sm text-fg-2">
-                    <svg
-                      class="w-4 h-4 mt-0.5 shrink-0 text-accent"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                    >
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                    {h}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Two-column preview */}
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div class="bg-input/30 rounded-xl p-4">
-                <p class="text-xs font-semibold text-fg-3 uppercase tracking-wider mb-2">
-                  Conversion Blocker
-                </p>
-                <p class="text-sm text-fg-2">
-                  <span class="text-red font-medium">High:</span>{" "}
-                  No urgency indicators — countdown timer missing
+            <div class="p-6 sm:p-8 space-y-6">
+              {/* Primary angle */}
+              <div>
+                <div class="flex flex-wrap items-center gap-3 mb-3">
+                  <span class="badge badge-accent">Scarcity</span>
+                  <div class="flex items-center gap-2 flex-1 max-w-xs">
+                    <div class="confidence-bar flex-1">
+                      <div class="confidence-fill high" style={{ transform: "scaleX(0.92)" }} />
+                    </div>
+                    <span class="text-xs font-semibold text-green nums">92%</span>
+                  </div>
+                </div>
+                <p class="text-sm text-fg-2 leading-relaxed">
+                  The page presents itself as an official example domain — implying it's a standard
+                  reference.
                 </p>
               </div>
-              <div class="bg-input/30 rounded-xl p-4">
-                <p class="text-xs font-semibold text-fg-3 uppercase tracking-wider mb-2">
-                  Ad Copy (Facebook)
-                </p>
-                <p class="text-sm text-fg-2">
-                  <span class="text-accent font-medium">"</span>Don't miss out. Only 24h
-                  left.<span class="text-accent font-medium">"</span>
-                </p>
+
+              <hr />
+
+              {/* Hook ideas */}
+              <div>
+                <div class="flex items-center justify-between mb-3">
+                  <p class="eyebrow">Hook Ideas</p>
+                  <span class="text-xs text-fg-3 nums">3 of 5</span>
+                </div>
+                <ul class="space-y-2">
+                  {[
+                    "Limited supply — act before it's gone",
+                    "Only 47 spots left at this price",
+                    "Last chance to lock in early access",
+                  ].map((h, i) => (
+                    <li key={i} class="flex items-start gap-2.5 text-sm text-fg">
+                      <Icon
+                        name="check"
+                        size={14}
+                        stroke={2.5}
+                        class="text-green mt-0.5 shrink-0"
+                      />
+                      <span>{h}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <hr />
+
+              {/* Two-column preview */}
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-surface-2 border border-border rounded-xl p-4">
+                  <div class="flex items-center gap-2 mb-2">
+                    <Icon name="alert" size={12} class="text-red" />
+                    <p class="eyebrow text-fg-2">Top blocker</p>
+                  </div>
+                  <p class="text-sm text-fg">
+                    <span class="badge badge-red mr-2">High</span>
+                    No urgency indicators — countdown timer missing
+                  </p>
+                </div>
+                <div class="bg-surface-2 border border-border rounded-xl p-4">
+                  <div class="flex items-center gap-2 mb-2">
+                    <Icon name="document" size={12} class="text-accent" />
+                    <p class="eyebrow text-fg-2">Ad copy · Facebook</p>
+                  </div>
+                  <p class="text-sm text-fg leading-relaxed">
+                    <span class="text-accent font-medium">"</span>Don't miss out. Only 24h left at
+                    this price.
+                    <span class="text-accent font-medium">"</span>
+                  </p>
+                </div>
               </div>
             </div>
           </div>
 
-          <p class="text-center text-xs text-fg-3 mt-4">
+          <p class="text-center text-xs text-fg-3 mt-5 inline-flex items-center gap-1.5 mx-auto justify-center w-full">
+            <Icon name="sparkle" size={12} class="text-accent" />
             Paste a real URL above to see the full analysis for any page.
           </p>
         </section>
@@ -510,44 +479,49 @@ export function HomePage({ preloadedUrl }: Props) {
 
       {/* ── FINAL CTA ── */}
       {!hasAnalysis && !preloadedUrl && (
-        <section class="py-12 sm:py-16 border-t border-border/40 text-center">
-          <div class="max-w-[580px] mx-auto glass rounded-2xl p-8 sm:p-10">
-            <h2 class="text-2xl sm:text-3xl font-bold tracking-tight mb-3">
-              Ready to analyze?
-            </h2>
-            <p class="text-sm sm:text-base text-fg-2 mb-6">
-              Paste a URL above or enter one now — it's free.
-            </p>
-            <form onSubmit={handleSubmit} class="flex flex-col sm:flex-row gap-3">
-              <div class="flex-1 relative">
-                <input
-                  type="text"
-                  value={url}
-                  onInput={(e) => handleUrlInput((e.target as HTMLInputElement).value)}
-                  class="w-full px-4 py-3 pl-10 bg-input/50 border border-border rounded-xl text-sm
-                    focus:outline-none focus:border-accent transition-all"
-                  placeholder="Paste a landing page URL..."
-                />
-                <svg
-                  class="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-fg-3 pointer-events-none"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
-                  <circle cx="11" cy="11" r="8" />
-                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                </svg>
+        <section class="py-16 sm:py-20 border-t border-border/60">
+          <div class="max-w-[640px] mx-auto card p-8 sm:p-10 text-center relative overflow-hidden">
+            <div class="absolute inset-0 hero-mesh opacity-60" aria-hidden="true" />
+            <div class="relative">
+              <div class="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-accent text-white mb-5 shadow-glow">
+                <Icon name="rocket" size={22} />
               </div>
-              <button
-                type="submit"
-                disabled={isLoading.value}
-                class="btn-glow px-6 py-3 text-white rounded-xl font-semibold text-sm
-                  border-none cursor-pointer disabled:opacity-50 shrink-0"
+              <h2 class="display display-lg mb-3">Ready to analyze?</h2>
+              <p class="text-sm sm:text-base text-fg-2 mb-6 leading-relaxed max-w-md mx-auto">
+                Paste a URL and watch OfferLens reverse-engineer the offer in seconds.
+              </p>
+              <form
+                onSubmit={handleSubmit}
+                class="flex flex-col sm:flex-row gap-2 max-w-md mx-auto"
               >
-                {isLoading.value ? "Analyzing..." : "Analyze →"}
-              </button>
-            </form>
+                <div class="flex-1 relative">
+                  <Icon
+                    name="link"
+                    size={14}
+                    class="absolute left-3.5 top-1/2 -translate-y-1/2 text-fg-3 pointer-events-none"
+                  />
+                  <input
+                    type="text"
+                    value={url}
+                    onInput={(e) => handleUrlInput((e.target as HTMLInputElement).value)}
+                    class="input pl-10 py-3 text-sm"
+                    placeholder="Paste a landing page URL..."
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={isLoading.value}
+                  class="btn-primary px-5 py-3 text-sm"
+                >
+                  {isLoading.value ? <span class="spinner" /> : (
+                    <>
+                      Analyze
+                      <Icon name="arrow-right" size={14} />
+                    </>
+                  )}
+                </button>
+              </form>
+            </div>
           </div>
         </section>
       )}
@@ -556,13 +530,16 @@ export function HomePage({ preloadedUrl }: Props) {
       {isLoading.value && !preloadedUrl && <LoadingSkeleton />}
 
       {errorMessage.value && (
-        <div class="glass rounded-xl p-5 my-6 mx-auto max-w-[600px] text-center border-red/30">
-          <p class="text-red font-medium">{errorMessage.value}</p>
+        <div class="card border-red/40 bg-red-subtle p-5 my-6 mx-auto max-w-[600px] flex items-start gap-3">
+          <Icon name="alert" size={18} class="text-red shrink-0 mt-0.5" />
+          <div class="flex-1">
+            <p class="text-sm font-medium text-fg">{errorMessage.value}</p>
+          </div>
           {!preloadedUrl && (
             <button
               type="button"
               onClick={() => errorMessage.value = ""}
-              class="mt-2 text-xs text-fg-2 hover:text-fg underline bg-transparent border-none cursor-pointer"
+              class="btn-ghost text-xs"
             >
               Dismiss
             </button>

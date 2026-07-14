@@ -11,6 +11,7 @@ import { AnalysisPage } from "./pages/AnalysisPage.tsx"
 import { ToastContainer } from "./components/Toast.tsx"
 import { authToken, currentUser, setAuth, theme } from "./lib/state.ts"
 import { fetchMe } from "./lib/api.ts"
+import { Icon } from "./components/Icon.tsx"
 
 type Page =
   | { type: "home" }
@@ -33,6 +34,12 @@ function getPageFromPath(): Page {
   if (path === "/settings") return { type: "settings" }
   if (path === "/sections") return { type: "sections" }
   return { type: "home" }
+}
+
+const navTo = (path: string) => (e: Event) => {
+  e.preventDefault()
+  history.pushState(null, "", path)
+  dispatchEvent(new PopStateEvent("popstate"))
 }
 
 export function App() {
@@ -58,11 +65,18 @@ export function App() {
     return () => removeEventListener("popstate", handlePop)
   }, [])
 
+  // Wider container for home (hero needs space) and analysis (results)
+  const wide = page.type === "home" || page.type === "analysis"
+
   return (
     <div class="min-h-screen flex flex-col">
       <Header />
 
-      <main class="flex-1 max-w-[1100px] mx-auto w-full px-4 sm:px-6 py-6 sm:py-8">
+      <main
+        class={`flex-1 mx-auto w-full px-4 sm:px-6 py-6 sm:py-10 ${
+          wide ? "max-w-[1180px]" : "max-w-[860px]"
+        }`}
+      >
         {page.type === "home" && <HomePage preloadedUrl={preloadedUrl} />}
         {page.type === "batch" && <BatchPage />}
         {page.type === "login" && <LoginPage />}
@@ -73,13 +87,20 @@ export function App() {
         {page.type === "analysis" && <AnalysisPage id={page.id} />}
       </main>
 
-      <footer class="border-t border-border/50 py-6 mt-auto">
-        <div class="max-w-[1100px] mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-fg-3">
-          <span>© {new Date().getFullYear()} OfferLens · AI-Powered Marketing Intelligence</span>
-          <span>
-            <a href="/" class="text-fg-2 hover:text-fg transition-colors">Home</a> &middot;{" "}
-            <a href="/batch" class="text-fg-2 hover:text-fg transition-colors">Batch</a>
-          </span>
+      <footer class="border-t border-border/50 mt-auto">
+        <div class="max-w-[1180px] mx-auto px-4 sm:px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-fg-3">
+          <div class="flex items-center gap-2">
+            <Icon name="sparkle" size={12} class="text-accent" />
+            <span>© {new Date().getFullYear()} OfferLens</span>
+            <span class="text-fg-3/50">·</span>
+            <span>AI-powered marketing intelligence</span>
+          </div>
+          <div class="flex items-center gap-4">
+            <a href="/" onClick={navTo("/")} class="hover:text-fg transition-colors">Home</a>
+            <a href="/batch" onClick={navTo("/batch")} class="hover:text-fg transition-colors">
+              Batch
+            </a>
+          </div>
         </div>
       </footer>
 

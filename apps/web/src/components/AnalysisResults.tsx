@@ -6,6 +6,8 @@ import type {
   TrustSignal,
 } from "../lib/api.ts"
 import { CopyButton } from "./CopyButton.tsx"
+import { ConfidenceMeter } from "./ConfidenceMeter.tsx"
+import { Icon, type IconName } from "./Icon.tsx"
 import { type ComponentChildren, useState } from "preact/hooks"
 
 interface Props {
@@ -14,7 +16,8 @@ interface Props {
 
 export function AnalysisResults({ analysis }: Props) {
   return (
-    <div class="mt-6">
+    <div class="mt-8 space-y-3">
+      <ResultsHeader analysis={analysis} />
       <PrimaryAngle angle={analysis.primaryAngle} />
       <HooksList hooks={analysis.hookIdeas} />
       <TargetAudience audience={analysis.targetAudience} />
@@ -36,307 +39,489 @@ export function AnalysisResults({ analysis }: Props) {
   )
 }
 
-// Collapsible section wrapper
-function CollapsibleSection({
+function ResultsHeader({ analysis }: { analysis: LandingPageAnalysis }) {
+  return (
+    <div class="card p-5 sm:p-6 mb-2 fade-up">
+      <div class="flex items-start justify-between gap-4 flex-wrap">
+        <div class="flex items-center gap-3">
+          <div class="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-green-subtle text-green border border-green/20">
+            <Icon name="check" size={18} stroke={2.5} />
+          </div>
+          <div>
+            <h2 class="text-lg font-bold tracking-tight">Analysis complete</h2>
+            <p class="text-xs text-fg-3 mt-0.5">
+              Primary angle detected · {analysis.hookIdeas?.length || 0} hooks ·{" "}
+              {analysis.adCopy?.facebook?.length || 0} ad variants
+            </p>
+          </div>
+        </div>
+        <span class="badge badge-green">
+          <Icon name="sparkle" size={10} />
+          Live
+        </span>
+      </div>
+    </div>
+  )
+}
+
+// ── Collapsible section ──
+function Section({
+  icon,
   title,
+  count,
   defaultOpen = true,
   children,
 }: {
+  icon: IconName
   title: string
+  count?: number
   defaultOpen?: boolean
   children: ComponentChildren
 }) {
   const [open, setOpen] = useState(defaultOpen)
   return (
-    <section class="mb-6">
+    <section class="card overflow-hidden fade-up">
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        class="w-full flex items-center justify-between text-left cursor-pointer bg-transparent border-none p-0"
+        class="w-full flex items-center justify-between gap-3 px-5 sm:px-6 py-4 text-left
+          cursor-pointer bg-transparent border-none hover:bg-input/40 transition-colors"
       >
-        <h2 class="text-lg text-accent flex items-center gap-2">
-          <span class={`collapse-arrow ${open ? "open" : ""} inline-block`}>▶</span>
-          {title}
-        </h2>
+        <div class="flex items-center gap-3 min-w-0">
+          <span class="inline-flex items-center justify-center w-8 h-8 rounded-lg
+            bg-accent-subtle text-accent border border-accent/20 shrink-0">
+            <Icon name={icon} size={15} />
+          </span>
+          <span class="font-semibold text-sm tracking-tight truncate">{title}</span>
+          {typeof count === "number" && (
+            <span class="text-xs text-fg-3 nums font-mono">{count}</span>
+          )}
+        </div>
+        <Icon
+          name="chevron-down"
+          size={14}
+          class={`text-fg-3 shrink-0 transition-transform duration-200 ${open ? "" : "-rotate-90"}`}
+        />
       </button>
-      {open && <div class="mt-2.5">{children}</div>}
+      {open && (
+        <div class="px-5 sm:px-6 pb-5 sm:pb-6 pt-1 border-t border-border">
+          {children}
+        </div>
+      )}
     </section>
   )
 }
 
 function PrimaryAngle({ angle }: { angle: LandingPageAnalysis["primaryAngle"] }) {
+  const type = esc(angle.type)
   return (
-    <CollapsibleSection title="🎯 PRIMARY ANGLE">
-      <div class="glass rounded-xl px-5 py-4">
-        <div class="flex items-center gap-2.5 mb-2">
-          <span class="bg-accent text-white px-2.5 py-0.5 rounded text-xs font-semibold uppercase">
-            {esc(angle.type)}
-          </span>
-          <span class="text-sm text-green font-semibold">
-            {angle.confidence ?? 0}% confidence
-          </span>
+    <Section icon="target" title="Primary angle">
+      <div class="pt-4 space-y-4">
+        <div class="flex flex-wrap items-center gap-3">
+          <span class="badge badge-accent text-sm">{type}</span>
+          <div class="flex-1 min-w-[200px] max-w-xs">
+            <ConfidenceMeter value={angle.confidence ?? 0} label="confidence" />
+          </div>
         </div>
-        <p class="text-xs text-fg-3">{esc(angle.explanation || "")}</p>
+        <p class="text-sm text-fg-2 leading-relaxed">{esc(angle.explanation || "")}</p>
       </div>
-    </CollapsibleSection>
+    </Section>
   )
 }
 
 function HooksList({ hooks }: { hooks: string[] }) {
   if (!hooks?.length) return null
   return (
-    <CollapsibleSection title="📋 HOOK IDEAS">
-      <CopyButton
-        text={hooks.join("\n")}
-        label="Copy All"
-        class="mb-2 text-xs px-2.5 py-1 bg-accent text-white rounded-lg font-medium inline-flex items-center gap-1.5 hover:bg-accent-hover border-none cursor-pointer"
-      />
-      <ol class="list-decimal pl-6">
-        {hooks.map((h, i) => (
-          <li key={i} class="flex justify-between items-start py-1.5 gap-2.5 text-sm">
-            <span>{esc(h)}</span>
-            <CopyButton text={h} />
-          </li>
-        ))}
-      </ol>
-    </CollapsibleSection>
+    <Section icon="zap" title="Hook ideas" count={hooks.length}>
+      <div class="pt-4">
+        <div class="flex justify-end mb-3">
+          <CopyButton text={hooks.join("\n")} variant="pill" label="Copy all" />
+        </div>
+        <ol class="space-y-2.5">
+          {hooks.map((h, i) => (
+            <li
+              key={i}
+              class="flex justify-between items-start gap-3 py-2.5 px-3 rounded-lg
+                bg-surface-2 border border-border hover:border-border-strong transition-colors"
+            >
+              <div class="flex items-start gap-3 min-w-0">
+                <span class="text-xs font-mono font-semibold text-fg-3 nums pt-0.5 shrink-0">
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <span class="text-sm text-fg leading-relaxed">{esc(h)}</span>
+              </div>
+              <CopyButton text={h} variant="inline" />
+            </li>
+          ))}
+        </ol>
+      </div>
+    </Section>
   )
 }
 
 function TargetAudience({ audience }: { audience: LandingPageAnalysis["targetAudience"] }) {
   return (
-    <CollapsibleSection title="👤 TARGET AUDIENCE">
-      <div class="glass rounded-xl px-5 py-4">
-        <p>
-          <strong>Demographics:</strong> {esc(audience.demographics || "")}
-        </p>
-        <p>
-          <strong>Interests:</strong> {esc(audience.interests || "")}
-        </p>
-        <p>
-          <strong>Likely Platform:</strong>{" "}
-          <span class="bg-accent text-white px-2.5 py-0.5 rounded text-xs font-semibold">
-            {esc(audience.likelyPlatform || "")}
-          </span>
-        </p>
-        <p class="text-xs text-fg-3">
-          <strong>Notes:</strong> {esc(audience.confidenceNotes || "")}
-        </p>
+    <Section icon="users" title="Target audience">
+      <div class="pt-4 space-y-3 text-sm">
+        <Row label="Demographics">{esc(audience.demographics || "—")}</Row>
+        <Row label="Interests">{esc(audience.interests || "—")}</Row>
+        <Row label="Likely platform">
+          <span class="badge badge-accent">{esc(audience.likelyPlatform || "—")}</span>
+        </Row>
+        {audience.confidenceNotes && (
+          <div class="pt-2 mt-2 border-t border-border">
+            <p class="text-xs text-fg-3 leading-relaxed">
+              <span class="text-fg-2 font-medium">Notes:</span>
+              {esc(audience.confidenceNotes)}
+            </p>
+          </div>
+        )}
       </div>
-    </CollapsibleSection>
+    </Section>
+  )
+}
+
+function Row({ label, children }: { label: string; children: ComponentChildren }) {
+  return (
+    <div class="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-4">
+      <span class="text-xs font-medium text-fg-3 uppercase tracking-wider sm:w-32 shrink-0 pt-0.5">
+        {label}
+      </span>
+      <span class="text-sm text-fg flex-1">{children}</span>
+    </div>
   )
 }
 
 function AdCopySection({ adCopy }: { adCopy: LandingPageAnalysis["adCopy"] }) {
   const [tab, setTab] = useState<"facebook" | "google" | "native">("facebook")
 
+  const total = (adCopy.facebook?.length || 0) + (adCopy.google?.length || 0) +
+    (adCopy.native?.length || 0)
+
   return (
-    <CollapsibleSection title="📑 AD COPY">
-      <div class="flex gap-0.5 mb-2.5">
-        {(["facebook", "google", "native"] as const).map((t) => (
-          <button
-            key={t}
-            type="button"
-            onClick={() => setTab(t)}
-            class={`flex-1 py-2.5 px-3 cursor-pointer text-xs text-center rounded-lg transition-colors ${
-              tab === t
-                ? "bg-accent text-white font-medium shadow-sm"
-                : "bg-input/50 border border-border/50 text-fg-2 hover:bg-input"
-            }`}
-          >
-            {t.charAt(0).toUpperCase() + t.slice(1)}
-          </button>
-        ))}
+    <Section icon="document" title="Ad copy" count={total}>
+      <div class="pt-4">
+        <div class="tab-list mb-4">
+          {(["facebook", "google", "native"] as const).map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => setTab(t)}
+              class={`tab ${tab === t ? "active" : ""}`}
+            >
+              {t.charAt(0).toUpperCase() + t.slice(1)}
+              <span class="ml-1.5 text-xs text-fg-3 nums">
+                {t === "facebook"
+                  ? adCopy.facebook?.length || 0
+                  : t === "google"
+                  ? adCopy.google?.length || 0
+                  : adCopy.native?.length || 0}
+              </span>
+            </button>
+          ))}
+        </div>
+        {tab === "facebook" && <AdVariants variants={adCopy.facebook} />}
+        {tab === "google" && <AdVariants variants={adCopy.google} />}
+        {tab === "native" && <NativeVariants variants={adCopy.native} />}
       </div>
-      {tab === "facebook" && <AdVariants variants={adCopy.facebook} />}
-      {tab === "google" && <AdVariants variants={adCopy.google} />}
-      {tab === "native" && <NativeVariants variants={adCopy.native} />}
-    </CollapsibleSection>
+    </Section>
   )
 }
 
 function AdVariants({ variants }: { variants: AdVariant[] }) {
-  if (!variants?.length) return <p>No variants</p>
+  if (!variants?.length) return <Empty>No variants for this platform.</Empty>
   return (
-    <>
+    <div class="space-y-3">
       {variants.map((v, i) => (
-        <div key={i} class="glass rounded-xl px-4 py-3 mb-2">
-          <p class="text-xs text-accent-hover mb-1.5 font-semibold">Variant {i + 1}</p>
-          <p>
-            <strong>Headline:</strong> {esc(v.headline)} <CopyButton text={v.headline} />
-          </p>
-          <p>
-            <strong>Text:</strong> {esc(v.primaryText)} <CopyButton text={v.primaryText} />
-          </p>
-          <p>
-            <strong>CTA:</strong>{" "}
-            <span class="bg-accent text-white px-2.5 py-0.5 rounded text-xs font-semibold">
-              {esc(v.cta)}
-            </span>{" "}
-            <CopyButton text={v.cta} />
-          </p>
+        <div key={i} class="bg-surface-2 border border-border rounded-xl p-4">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-mono font-semibold text-accent uppercase tracking-wider">
+              Variant {String(i + 1).padStart(2, "0")}
+            </span>
+            <CopyButton
+              text={`${v.headline}\n${v.primaryText}\n${v.cta}`}
+              variant="pill"
+              label="Copy"
+            />
+          </div>
+          <div class="space-y-2.5">
+            <Copyable label="Headline">{esc(v.headline)}</Copyable>
+            <Copyable label="Body">{esc(v.primaryText)}</Copyable>
+            <Copyable label="CTA">
+              <span class="badge badge-accent normal-case tracking-normal">{esc(v.cta)}</span>
+            </Copyable>
+          </div>
         </div>
       ))}
-    </>
+    </div>
   )
 }
 
 function NativeVariants({ variants }: { variants: NativeAdVariant[] }) {
-  if (!variants?.length) return <p>No variants</p>
+  if (!variants?.length) return <Empty>No variants for this platform.</Empty>
   return (
-    <>
+    <div class="space-y-3">
       {variants.map((v, i) => (
-        <div key={i} class="glass rounded-xl px-4 py-3 mb-2">
-          <p class="text-xs text-accent-hover mb-1.5 font-semibold">Variant {i + 1}</p>
-          <p>
-            <strong>Headline:</strong> {esc(v.headline)} <CopyButton text={v.headline} />
-          </p>
-          <p>
-            <strong>Body:</strong> {esc(v.body)} <CopyButton text={v.body} />
-          </p>
-          <p>
-            <strong>CTA:</strong>{" "}
-            <span class="bg-accent text-white px-2.5 py-0.5 rounded text-xs font-semibold">
-              {esc(v.cta)}
-            </span>{" "}
-            <CopyButton text={v.cta} />
-          </p>
+        <div key={i} class="bg-surface-2 border border-border rounded-xl p-4">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-mono font-semibold text-accent uppercase tracking-wider">
+              Variant {String(i + 1).padStart(2, "0")}
+            </span>
+            <CopyButton text={`${v.headline}\n${v.body}\n${v.cta}`} variant="pill" label="Copy" />
+          </div>
+          <div class="space-y-2.5">
+            <Copyable label="Headline">{esc(v.headline)}</Copyable>
+            <Copyable label="Body">{esc(v.body)}</Copyable>
+            <Copyable label="CTA">
+              <span class="badge badge-accent normal-case tracking-normal">{esc(v.cta)}</span>
+            </Copyable>
+          </div>
         </div>
       ))}
-    </>
+    </div>
+  )
+}
+
+function Copyable({ label, children }: { label: string; children: ComponentChildren }) {
+  return (
+    <div class="group">
+      <span class="text-xs text-fg-3 uppercase tracking-wider font-medium block mb-1">
+        {label}
+      </span>
+      <div class="flex items-start gap-2 text-sm text-fg leading-relaxed">
+        <span class="flex-1">{children}</span>
+      </div>
+    </div>
   )
 }
 
 function EmailSmsSection({ email }: { email: LandingPageAnalysis["emailAngle"] }) {
   return (
-    <CollapsibleSection title="📧 EMAIL & SMS ANGLES">
-      <div class="glass rounded-xl px-5 py-4">
-        <h4>
-          Subject Lines{" "}
-          <CopyButton
-            text={(email.subjectLines || []).join("\n")}
-            label="Copy All"
-            class="text-xs px-2.5 py-1 bg-accent text-white rounded-lg font-medium inline-flex items-center gap-1.5 hover:bg-accent-hover border-none cursor-pointer"
-          />
-        </h4>
-        <ul>
-          {(email.subjectLines || []).map((s, i) => (
-            <li key={i} class="flex justify-between items-start gap-2.5">
-              <span>{esc(s)}</span>
-              <CopyButton text={s} />
-            </li>
-          ))}
-        </ul>
-        <h4>Email Body Angle</h4>
-        <p class="text-xs text-fg-3">{esc(email.bodyAngle || "")}</p>
-        <h4>
-          SMS Pitch <CopyButton text={email.smsAngle || ""} />
-        </h4>
-        <p class="glass rounded-xl border-l-4 border-accent px-4 py-3 text-sm">
-          {esc(email.smsAngle || "")}
-        </p>
+    <Section icon="mail" title="Email & SMS angles">
+      <div class="pt-4 space-y-5">
+        <div>
+          <div class="flex items-center justify-between mb-2.5">
+            <p class="eyebrow">Subject lines</p>
+            <CopyButton
+              text={(email.subjectLines || []).join("\n")}
+              variant="pill"
+              label="Copy all"
+            />
+          </div>
+          <ul class="space-y-2">
+            {(email.subjectLines || []).map((s, i) => (
+              <li
+                key={i}
+                class="flex items-start gap-3 py-2 px-3 rounded-lg
+                  bg-surface-2 border border-border hover:border-border-strong transition-colors"
+              >
+                <Icon name="mail" size={13} class="text-fg-3 mt-1 shrink-0" />
+                <span class="text-sm text-fg flex-1">{esc(s)}</span>
+                <CopyButton text={s} variant="inline" />
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {email.bodyAngle && (
+          <div>
+            <p class="eyebrow mb-2">Email body angle</p>
+            <p class="text-sm text-fg-2 leading-relaxed">{esc(email.bodyAngle)}</p>
+          </div>
+        )}
+
+        {email.smsAngle && (
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <p class="eyebrow">SMS pitch</p>
+              <CopyButton text={email.smsAngle || ""} variant="pill" />
+            </div>
+            <div class="bg-accent-subtle border-l-2 border-accent rounded-r-lg px-4 py-3 text-sm text-fg">
+              <div class="flex items-start gap-2">
+                <Icon name="message" size={14} class="text-accent mt-0.5 shrink-0" />
+                <span class="leading-relaxed">{esc(email.smsAngle)}</span>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
-    </CollapsibleSection>
+    </Section>
   )
 }
 
 function TrustSignalsSection({ signals }: { signals: TrustSignal[] }) {
   return (
-    <CollapsibleSection title="🕊 TRUST SIGNALS">
-      <div class="glass rounded-xl px-5 py-4">
+    <Section icon="shield" title="Trust signals" count={signals.length}>
+      <div class="pt-4 space-y-2">
         {signals.map((ts, i) => {
-          const icon = ts.present ? "✅" : "❌"
-          const sc = ts.strength === "strong"
+          const strengthColor = ts.strength === "strong"
             ? "text-green"
             : ts.strength === "medium"
             ? "text-yellow"
             : "text-red"
           return (
-            <p key={i}>
-              {icon} <strong>{esc(ts.type)}</strong> <span class={sc}>({ts.strength})</span>:{" "}
-              {esc(ts.detail)}
-            </p>
+            <div
+              key={i}
+              class="flex items-start gap-3 py-2.5 px-3 rounded-lg
+                bg-surface-2 border border-border"
+            >
+              <div
+                class={`inline-flex items-center justify-center w-6 h-6 rounded-md shrink-0 mt-0.5 ${
+                  ts.present ? "bg-green-subtle text-green" : "bg-red-subtle text-red"
+                }`}
+              >
+                <Icon name={ts.present ? "check" : "x"} size={12} stroke={2.5} />
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 flex-wrap mb-0.5">
+                  <span class="font-medium text-sm text-fg">{esc(ts.type)}</span>
+                  <span class={`text-xs font-semibold uppercase tracking-wider ${strengthColor}`}>
+                    {ts.strength}
+                  </span>
+                </div>
+                <p class="text-xs text-fg-3 leading-relaxed">{esc(ts.detail)}</p>
+              </div>
+            </div>
           )
         })}
       </div>
-    </CollapsibleSection>
+    </Section>
   )
 }
 
 function BlockersSection({ blockers }: { blockers: Blocker[] }) {
   return (
-    <CollapsibleSection title="⚠ CONVERSION BLOCKERS">
-      <div class="glass rounded-xl px-5 py-4">
+    <Section icon="alert" title="Conversion blockers" count={blockers.length}>
+      <div class="pt-4 space-y-2.5">
         {blockers.map((b, i) => {
-          const dot = b.severity === "high" ? "🔴" : b.severity === "medium" ? "🟡" : "🟢"
+          const sev = b.severity
+          const badgeClass = sev === "high"
+            ? "badge-red"
+            : sev === "medium"
+            ? "badge-neutral"
+            : "badge-green"
           return (
-            <div key={i} class="mb-2.5">
-              <p>
-                {dot} <strong>{esc(b.issue)}</strong>
+            <div
+              key={i}
+              class="bg-surface-2 border border-border rounded-xl p-4"
+            >
+              <div class="flex items-start gap-3 mb-2">
+                <span class={`badge ${badgeClass} normal-case tracking-normal`}>
+                  {sev}
+                </span>
+                <p class="text-sm font-semibold text-fg flex-1">{esc(b.issue)}</p>
+              </div>
+              <p class="text-xs text-fg-2 leading-relaxed pl-1">
+                <span class="text-fg-3">Fix:</span>
+                {esc(b.suggestion)}
               </p>
-              <p class="text-xs text-fg-3">Suggestion: {esc(b.suggestion)}</p>
             </div>
           )
         })}
       </div>
-    </CollapsibleSection>
+    </Section>
   )
 }
 
 function AbTestsSection({ ideas }: { ideas: string[] }) {
   return (
-    <CollapsibleSection title="💡 A/B TEST IDEAS">
-      <ol class="glass rounded-xl px-5 py-4">
-        {ideas.map((i, idx) => <li key={idx}>{esc(i)}</li>)}
-      </ol>
-    </CollapsibleSection>
+    <Section icon="flask" title="A/B test ideas" count={ideas.length}>
+      <div class="pt-4">
+        <div class="flex justify-end mb-3">
+          <CopyButton text={ideas.join("\n")} variant="pill" label="Copy all" />
+        </div>
+        <ol class="space-y-2">
+          {ideas.map((idea, idx) => (
+            <li
+              key={idx}
+              class="flex items-start gap-3 py-2.5 px-3 rounded-lg
+                bg-surface-2 border border-border"
+            >
+              <span class="text-xs font-mono font-semibold text-accent nums pt-0.5 shrink-0">
+                {String(idx + 1).padStart(2, "0")}
+              </span>
+              <span class="text-sm text-fg flex-1 leading-relaxed">{esc(idea)}</span>
+              <CopyButton text={idea} variant="inline" />
+            </li>
+          ))}
+        </ol>
+      </div>
+    </Section>
   )
 }
 
 function CompetitiveIntel({ intel }: { intel: LandingPageAnalysis["competitiveIntel"] }) {
   return (
-    <CollapsibleSection title="🕺 COMPETITIVE INTEL">
-      <div class="glass rounded-xl px-5 py-4">
-        <p>
-          <strong>Likely Traffic:</strong> {esc((intel.likelyTrafficSources || []).join(", "))}
-        </p>
-        <p>
-          <strong>Est. Daily Spend:</strong>{" "}
-          <span class="bg-accent text-white px-2.5 py-0.5 rounded text-xs font-semibold">
-            {esc(intel.estimatedDailySpend || "")}
+    <Section icon="eye" title="Competitive intel">
+      <div class="pt-4 space-y-4 text-sm">
+        <Row label="Likely traffic">
+          <div class="flex flex-wrap gap-1.5">
+            {(intel.likelyTrafficSources || []).map((src, i) => (
+              <span key={i} class="badge badge-neutral normal-case tracking-normal">
+                {esc(src)}
+              </span>
+            ))}
+          </div>
+        </Row>
+        <Row label="Est. daily spend">
+          <span class="badge badge-accent normal-case tracking-normal">
+            {esc(intel.estimatedDailySpend || "—")}
           </span>
-        </p>
-        <p>
-          <strong>Competitors Testing:</strong> {esc(intel.whatCompetitorsAreLikelyTesting || "")}
-        </p>
+        </Row>
+        <Row label="A/B testing">
+          <p class="text-sm text-fg-2 leading-relaxed">
+            {esc(intel.whatCompetitorsAreLikelyTesting || "—")}
+          </p>
+        </Row>
       </div>
-    </CollapsibleSection>
+    </Section>
   )
 }
 
 function CompetitorAnglesSection({ angles }: { angles: string[] }) {
   return (
-    <CollapsibleSection title="⚔ COMPETITOR COUNTER-ANGLES">
-      <ul class="glass rounded-xl px-5 py-4">
-        {angles.map((a, i) => <li key={i}>{esc(a)}</li>)}
-      </ul>
-    </CollapsibleSection>
+    <Section icon="fire" title="Counter-angles" count={angles.length}>
+      <div class="pt-4">
+        <ul class="space-y-2">
+          {angles.map((a, i) => (
+            <li
+              key={i}
+              class="flex items-start gap-3 py-2.5 px-3 rounded-lg
+                bg-surface-2 border border-border"
+            >
+              <Icon name="fire" size={13} class="text-accent mt-1 shrink-0" />
+              <span class="text-sm text-fg flex-1 leading-relaxed">{esc(a)}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </Section>
   )
 }
 
-// Custom sections results
 function CustomSectionsSection({ results }: { results: Array<{ title: string; answer: string }> }) {
   return (
-    <CollapsibleSection title="Custom Analysis" defaultOpen>
-      <div class="flex flex-col gap-3">
+    <Section icon="sparkle" title="Custom analysis" count={results.length}>
+      <div class="pt-4 space-y-3">
         {results.map((r, i) => (
-          <div key={i} class="glass rounded-xl px-5 py-4">
-            <h4 class="font-semibold text-sm mb-1">{esc(r.title)}</h4>
-            <p class="text-sm text-fg-2">{esc(r.answer)}</p>
+          <div key={i} class="bg-surface-2 border border-border rounded-xl p-4">
+            <div class="flex items-center justify-between mb-2 gap-2">
+              <p class="font-semibold text-sm text-fg">{esc(r.title)}</p>
+              <CopyButton text={r.answer} variant="pill" />
+            </div>
+            <p class="text-sm text-fg-2 leading-relaxed">{esc(r.answer)}</p>
           </div>
         ))}
       </div>
-    </CollapsibleSection>
+    </Section>
+  )
+}
+
+function Empty({ children }: { children: ComponentChildren }) {
+  return (
+    <div class="text-center py-6 text-sm text-fg-3">
+      {children}
+    </div>
   )
 }
 

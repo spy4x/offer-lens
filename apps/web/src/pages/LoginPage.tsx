@@ -1,6 +1,7 @@
 import { useState } from "preact/hooks"
 import { login } from "../lib/api.ts"
 import { setAuth, showToast } from "../lib/state.ts"
+import { Icon } from "../components/Icon.tsx"
 
 export function LoginPage() {
   const [email, setEmail] = useState("")
@@ -22,7 +23,7 @@ export function LoginPage() {
     try {
       const res = await login(email, password)
       setAuth(res.token, res.user)
-      showToast("Welcome back!", "success")
+      showToast("Welcome back", "success")
       history.pushState(null, "", "/")
       dispatchEvent(new PopStateEvent("popstate"))
     } catch (err) {
@@ -33,26 +34,32 @@ export function LoginPage() {
   }
 
   return (
-    <div class="max-w-[420px] mx-auto mt-10 sm:mt-16">
-      <div class="glass rounded-2xl p-6 sm:p-8">
+    <div class="max-w-[420px] mx-auto mt-6 sm:mt-12 fade-up">
+      <div class="card p-7 sm:p-9">
+        <div class="flex justify-center mb-5">
+          <div class="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-accent-subtle text-accent border border-accent/20">
+            <Icon name="user" size={22} />
+          </div>
+        </div>
+
         <h1 class="text-2xl font-bold tracking-tight text-center mb-1">Welcome back</h1>
-        <p class="text-sm text-fg-2 text-center mb-6">Sign in to access your analyses</p>
+        <p class="text-sm text-fg-2 text-center mb-7">Sign in to access your analyses</p>
 
         <form onSubmit={handleSubmit} class="flex flex-col gap-4">
           <div>
-            <label class="text-xs font-medium text-fg-2 mb-1 block">Email</label>
+            <label class="label">Email</label>
             <input
               type="email"
               value={email}
               onInput={(e) => setEmail((e.target as HTMLInputElement).value)}
               placeholder="you@example.com"
               required
-              class="w-full px-4 py-3 bg-input border border-border rounded-xl text-fg text-sm
-                focus:outline-none focus:border-accent transition-colors"
+              class="input"
+              autoComplete="email"
             />
           </div>
           <div>
-            <label class="text-xs font-medium text-fg-2 mb-1 block">Password</label>
+            <label class="label">Password</label>
             <input
               type="password"
               value={password}
@@ -60,26 +67,34 @@ export function LoginPage() {
               placeholder="••••••"
               required
               minLength={6}
-              class="w-full px-4 py-3 bg-input border border-border rounded-xl text-fg text-sm
-                focus:outline-none focus:border-accent transition-colors"
+              class="input"
+              autoComplete="current-password"
             />
           </div>
 
-          {error && <p class="text-sm text-red text-center font-medium">{error}</p>}
+          {error && (
+            <div class="flex items-center gap-2 text-sm text-red bg-red-subtle border border-red/30 rounded-md px-3 py-2">
+              <Icon name="alert" size={14} />
+              {error}
+            </div>
+          )}
 
           <button
             type="submit"
             disabled={loading}
-            class="btn-glow w-full py-3 text-white rounded-xl font-semibold text-sm
-              border-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            class="btn-primary w-full py-3 mt-1"
           >
-            {loading ? "Signing in..." : "Sign in"}
+            {loading ? <span class="spinner" /> : "Sign in"}
           </button>
         </form>
 
-        <p class="text-sm text-fg-2 text-center mt-5">
+        <p class="text-sm text-fg-2 text-center mt-6">
           No account?{" "}
-          <a href="/register" onClick={navTo("/register")} class="text-accent font-medium">
+          <a
+            href="/register"
+            onClick={navTo("/register")}
+            class="text-accent font-medium hover:text-accent-hover"
+          >
             Create one
           </a>
         </p>
